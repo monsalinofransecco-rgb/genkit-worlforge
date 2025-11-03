@@ -58,6 +58,13 @@ export default function Dashboard({ worldId }: { worldId: string }) {
     saveWorld(updatedWorld);
   };
   
+  const updateRaceInWorld = (updatedRace: Race) => {
+    if (!world) return;
+    const newRaces = world.races.map(r => r.id === updatedRace.id ? updatedRace : r);
+    const newWorld = { ...world, races: newRaces };
+    updateWorld(newWorld);
+  };
+
   const handleTimeAdvance = async (years: 1 | 10) => {
     if (!world) return;
     setIsLoading(true);
@@ -265,7 +272,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                         <HistoryTab race={race} />
                     </TabsContent>
                      <TabsContent value="culture" className="pt-6">
-                        <RacesTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
+                        <RacesTab race={race} setWorld={updateRaceInWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
                     </TabsContent>
                      <TabsContent value="politics" className="pt-6">
                         <PoliticsTab />
