@@ -8,32 +8,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import type { World, NarrativeEntry } from '@/types/world';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { runAdvanceTime } from '@/app/actions';
 import {
-  Calendar,
-  Users,
   BookText,
-  Loader2,
-  CalendarPlus,
-  CalendarClock,
 } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
-import { InfluenceTab } from './InfluenceTab';
 
 type TabProps = {
   world: World;
-  setWorld: (world: World) => void;
-  isLoading: boolean;
-  setIsLoading: (loading: boolean) => void;
-  showStats?: boolean;
 };
 
-export function OverviewTab({ world, setWorld, isLoading, setIsLoading, showStats = true }: TabProps) {
-  const { toast } = useToast();
-  
-  const activeRaceId = world.races.length > 0 ? world.races[0].id : '';
+export function OverviewTab({ world }: TabProps) {
 
   return (
     <div className="pt-6">
@@ -65,3 +49,5 @@ export function OverviewTab({ world, setWorld, isLoading, setIsLoading, showStat
     </div>
   );
 }
+
+    

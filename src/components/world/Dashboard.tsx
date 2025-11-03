@@ -155,7 +155,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
-                        <DialogHeader>
+                       <DialogHeader>
                             <DialogTitle className="font-headline flex items-center gap-2">
                                 <Sparkles className="text-primary" />
                                 Creator's Store
@@ -179,14 +179,6 @@ export default function Dashboard({ worldId }: { worldId: string }) {
         </TabsList>
         {world.races.map(race => (
              <TabsContent key={race.id} value={race.id}>
-                <div className="grid md:grid-cols-3 gap-4 mb-6">
-                    <StatCard title="Population" value={race.population.toLocaleString()} icon={<Users className="text-muted-foreground" />} />
-                    <StatCard title="General Status" value={race.traits ? 'Defined' : 'Nascent'} icon={<BookOpen className="text-muted-foreground" />} />
-                    <StatCard title="Race Points" value={race.racePoints} icon={<Gem className="text-muted-foreground" />} />
-                    <StatCard title="Politics" value="Tribal" icon={<Landmark className="text-muted-foreground" />} />
-                    <StatCard title="Culture" value="Nascent" icon={<Sparkles className="text-muted-foreground" />} />
-                    <StatCard title="Location" value={race.location || "Not Set"} icon={<Hand className="text-muted-foreground" />} />
-                </div>
                 <Tabs defaultValue="overview" className="w-full mt-4">
                     <TabsList className="grid w-full grid-cols-2 md:grid-cols-6">
                         <TabsTrigger value="overview"><FileText className="mr-2 h-4 w-4" />Overview</TabsTrigger>
@@ -196,14 +188,21 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                         <TabsTrigger value="politics"><Landmark className="mr-2 h-4 w-4" />Politics</TabsTrigger>
                         <TabsTrigger value="graveyard"><Skull className="mr-2 h-4 w-4" />Graveyard</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="overview">
-                        <OverviewTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
+                    <TabsContent value="overview" className="pt-6 space-y-6">
+                         <div className="grid md:grid-cols-3 gap-4">
+                            <StatCard title="Population" value={race.population.toLocaleString()} icon={<Users className="text-muted-foreground" />} />
+                            <StatCard title="General Status" value={race.traits ? 'Defined' : 'Nascent'} icon={<BookOpen className="text-muted-foreground" />} />
+                            <StatCard title="Race Points" value={race.racePoints} icon={<Gem className="text-muted-foreground" />} />
+                            <StatCard title="Politics" value="Tribal" icon={<Landmark className="text-muted-foreground" />} />
+                            <StatCard title="Culture" value="Nascent" icon={<Sparkles className="text-muted-foreground" />} />
+                            <StatCard title="Location" value={race.location || "Not Set"} icon={<Hand className="text-muted-foreground" />} />
+                        </div>
                     </TabsContent>
                     <TabsContent value="characters">
                         <CharactersTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} activeRaceId={race.id} />
                     </TabsContent>
                      <TabsContent value="history">
-                        <OverviewTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} showStats={false} />
+                        <OverviewTab world={world} />
                     </TabsContent>
                      <TabsContent value="culture">
                         <RacesTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
@@ -256,3 +255,5 @@ function DashboardSkeleton() {
     </div>
   );
 }
+
+    
