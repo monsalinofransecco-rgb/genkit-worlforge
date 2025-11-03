@@ -103,6 +103,7 @@ const prompt = ai.definePrompt({
   name: 'advanceTimeAndGenerateNarrativeEventsPrompt',
   input: {schema: AdvanceTimeAndGenerateNarrativeEventsInputSchema},
   output: {schema: AdvanceTimeAndGenerateNarrativeEventsOutputSchema},
+  helpers: { isGuidanceProvided },
   prompt: `
 You are a 'Primal Era' Simulator. Your worldview MUST be PRIMEVAL, SIMPLE, and SUPERSTITIOUS. Your goals are Survival, Safety, and Basic Understanding (e.g., 'The sickness is an angry spirit'). You are FORBIDDEN from generating narratives with complex concepts like 'long-term planning,' 'economics,' or 'philosophy.'
 
@@ -166,7 +167,6 @@ SIMULATION DIRECTIVES FOR ADVANCING TIME BY {{years}} YEARS:
 
 Your final output MUST be a single JSON object matching the defined output schema.
 `,
-  helpers: { isGuidanceProvided }
 });
 
 const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
@@ -206,5 +206,3 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
-
-    
