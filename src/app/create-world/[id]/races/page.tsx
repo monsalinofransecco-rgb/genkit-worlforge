@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,11 +44,16 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+type PageParams = {
+  id: string;
+};
+
 export default function PopulateRacesPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<PageParams>;
 }) {
+  const { id } = use(params);
   const router = useRouter();
   const { toast } = useToast();
   const [world, setWorld] = useState<World | null>(null);
@@ -70,7 +75,7 @@ export default function PopulateRacesPage({
 
   useEffect(() => {
     setIsMounted(true);
-    const loadedWorld = getWorldById(params.id);
+    const loadedWorld = getWorldById(id);
     if (loadedWorld) {
       setWorld(loadedWorld);
       
@@ -86,7 +91,7 @@ export default function PopulateRacesPage({
       }
        setRaceCount(worldRaceCount);
     }
-  }, [params.id, append, form]);
+  }, [id, append, form]);
 
   async function onSubmit(data: FormValues) {
     if (!world) return;
