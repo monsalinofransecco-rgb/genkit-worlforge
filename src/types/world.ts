@@ -1,14 +1,63 @@
-export interface World {
+export type BoonId = 'fertility' | 'strength' | 'wisdom' | 'resilience';
+
+export interface Boon {
+  id: BoonId;
+  name: string;
+  description: string;
+  cost: number;
+  icon: React.ReactNode;
+}
+
+export interface NamingProfile {
+  phonemes: string;
+  inspiration: string;
+  languageStructure: string;
+}
+
+export interface Problem {
+    id: string;
+    title: string;
+    description: string;
+    severity: 'Low' | 'Medium' | 'High' | 'Critical' | 'Catastrophic';
+}
+
+export interface PersonalLogEntry {
+    year: number;
+    entry: string;
+    characterName?: string; // Optional: May not be needed if logs are nested in character
+}
+
+export interface NotableCharacter {
   id: string;
   name: string;
-  era: string;
-  currentYear: number;
-  races: Race[];
-  population: number;
-  significantEvents: string[];
-  cataclysmPreparations: string;
-  narrativeLog: NarrativeEntry[];
-  notableCharacters: NotableCharacter[];
+  raceId: string;
+  status: 'alive' | 'dead';
+  deathYear?: number;
+  deathNarrative?: string;
+  // Character Sheet fields
+  title: string;
+  age: number;
+  class: string;
+  ambition: string;
+  traits: string[];
+  skills: string[];
+  specialTraits: string[];
+  personalLog: PersonalLogEntry[];
+}
+
+
+export interface PopulationChange {
+    born: number;
+    died: number;
+    newPopulation: number;
+}
+
+export interface HistoryEntry {
+    year: number;
+    summary: string;
+    populationChange: PopulationChange;
+    events: string[];
+    emergenceReason?: string;
 }
 
 export interface Race {
@@ -21,19 +70,11 @@ export interface Race {
   traits?: string;
   location?: string;
   problems?: Problem[];
-}
-
-export interface Problem {
-    id: string;
-    title: string;
-    description: string;
-    severity: 'Low' | 'Medium' | 'High' | 'Critical' | 'Catastrophic';
-}
-
-export interface NamingProfile {
-  phonemes: string;
-  inspiration: string;
-  languageStructure: string;
+  notableCharacters: NotableCharacter[];
+  history: HistoryEntry[];
+  status: string; // e.g., "Emerging", "Stable", "Declining"
+  religion: { name: string; };
+  government: { name: string; };
 }
 
 export interface NarrativeEntry {
@@ -51,21 +92,14 @@ export interface NarrativeEntry {
   content: string;
 }
 
-export interface NotableCharacter {
+export interface World {
   id: string;
   name: string;
-  raceId: string;
-  status: 'alive' | 'dead';
-  deathYear?: number;
-  deathNarrative?: string;
-}
-
-export type BoonId = 'fertility' | 'strength' | 'wisdom' | 'resilience';
-
-export interface Boon {
-  id: BoonId;
-  name: string;
-  description: string;
-  cost: number;
-  icon: React.ReactNode;
+  era: string;
+  currentYear: number;
+  races: Race[];
+  population: number;
+  significantEvents: string[];
+  cataclysmPreparations: string;
+  narrativeLog: NarrativeEntry[];
 }

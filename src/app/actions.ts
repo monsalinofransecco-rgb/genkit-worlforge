@@ -3,6 +3,7 @@
 import {
   advanceTimeAndGenerateNarrativeEvents,
   type AdvanceTimeAndGenerateNarrativeEventsInput,
+  type AdvanceTimeAndGenerateNarrativeEventsOutput,
 } from '@/ai/flows/advance-time-and-generate-narrative-events';
 import {
   generateRaceNamingProfile,
@@ -19,13 +20,14 @@ import {
 
 export async function runAdvanceTime(
   input: AdvanceTimeAndGenerateNarrativeEventsInput
-) {
+): Promise<{ success: true, data: AdvanceTimeAndGenerateNarrativeEventsOutput } | { success: false, error: string }> {
   try {
     const result = await advanceTimeAndGenerateNarrativeEvents(input);
     return { success: true, data: result };
   } catch (error) {
     console.error('Error in runAdvanceTime:', error);
-    return { success: false, error: 'Failed to advance time.' };
+    const errorMessage = error instanceof Error ? error.message : 'Failed to advance time.';
+    return { success: false, error: errorMessage };
   }
 }
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getWorldById, saveWorld } from '@/lib/world-store';
-import type { World, Race, Problem } from '@/types/world';
+import type { World, HistoryEntry, NotableCharacter } from '@/types/world';
 import { notFound } from 'next/navigation';
 import {
   Card,
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { History, Shield, Users, Skull, FileText, Swords, Sparkles, BookOpen, Hand, Landmark, Store, Gem, AlertTriangle } from 'lucide-react';
+import { History, Users, Skull, FileText, Swords, Sparkles, Landmark, Store } from 'lucide-react';
 import { GraveyardTab } from './GraveyardTab';
 import { CharactersTab } from './CharactersTab';
 import { RacesTab } from './RacesTab';
@@ -33,22 +33,6 @@ import {
 import { InfluenceTab } from './InfluenceTab';
 import { OverviewTab } from './OverviewTab';
 import { HistoryTab } from './HistoryTab';
-import { ProblemsTab } from './ProblemsTab';
-
-
-function StatCard({ title, value, icon }: { title: string, value: string | number, icon: React.ReactNode }) {
-    return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                {icon}
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{value}</div>
-            </CardContent>
-        </Card>
-    )
-}
 
 
 export default function Dashboard({ worldId }: { worldId: string }) {
@@ -77,43 +61,77 @@ export default function Dashboard({ worldId }: { worldId: string }) {
   const handleTimeAdvance = async (years: 1 | 10) => {
     if (!world || !activeRace) return;
     setIsLoading(true);
+    
+    const livingCharacters = activeRace.notableCharacters.filter(c => c.status === 'alive');
+
     const result = await runAdvanceTime({
       years,
       worldName: world.name,
+      era: world.era,
       currentYear: world.currentYear,
-      raceCount: world.races.length,
-      population: world.population,
-      significantEvents: world.significantEvents.join('\n'),
-      boons: activeRace.activeBoons.join(', ') || 'None',
-      cataclysmPreparations: world.cataclysmPreparations,
+      race: {
+        id: activeRace.id,
+        name: activeRace.name,
+        population: activeRace.population,
+        traits: activeRace.traits || "",
+        location: activeRace.location || "",
+        livingCharacters,
+      },
       problems: activeRace.problems || [],
+      activeBoons: activeRace.activeBoons,
+      chronicleEntry: world.significantEvents[world.significantEvents.length-1]
     });
     setIsLoading(false);
 
     if (result.success && result.data) {
       const { data } = result;
-      const newEntries = [
-        { year: data.newYear, type: 'narrative' as const, content: data.narrativeEvents },
-        { year: data.newYear, type: 'population' as const, content: data.populationChanges },
-        { year: data.newYear, type: 'character' as const, content: data.characterLifecycleUpdates },
-        { year: data.newYear, type: 'problem' as const, content: data.problemSimulations },
-        { year: data.newYear, type: 'society' as const, content: data.societalEvolutions },
-        { year: data.newYear, type: 'discovery' as const, content: data.geographicalDiscoveries },
-      ].filter(entry => entry.content && entry.content.trim() !== '' && !entry.content.toLowerCase().includes('n/a'));
-
-      const popChangeMatch = data.populationChanges.match(/by approximately ([\d,]+)/);
-      const popChange = popChangeMatch ? parseInt(popChangeMatch[1].replace(/,/g, ''), 10) : years * 100;
+      const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, newYear } = data;
       
-      let newPopulation = activeRace.population;
-      if (data.populationChanges.includes('increased') || data.populationChanges.includes('grew')) {
-        newPopulation += popChange;
-      } else if (data.populationChanges.includes('decreased') || data.populationChanges.includes('declined')) {
-        newPopulation -= popChange;
+      const newHistoryEntry: HistoryEntry = {
+        year: newYear,
+        summary,
+        populationChange,
+        events,
+        emergenceReason,
+      };
+
+      const updatedCharacters = [...activeRace.notableCharacters];
+
+      // Add new character if one emerged
+      if (newCharacter) {
+        const fullNewCharacter: NotableCharacter = {
+            ...newCharacter,
+            raceId: activeRace.id,
+            status: 'alive',
+            personalLog: [{ year: newYear, entry: newCharacter.firstLogEntry }]
+        };
+        updatedCharacters.push(fullNewCharacter);
       }
+
+      // Add new personal log entries to existing characters
+      characterLogEntries.forEach(log => {
+        const charIndex = updatedCharacters.findIndex(c => c.id === log.characterId);
+        if (charIndex > -1) {
+            updatedCharacters[charIndex].personalLog.push({ year: newYear, entry: log.logEntry });
+        }
+      });
+      
+      // Update age of all living characters
+      updatedCharacters.forEach(char => {
+        if(char.status === 'alive') {
+            char.age += years;
+        }
+      });
       
       const updatedRaces = world.races.map(r => 
         r.id === activeRaceId 
-        ? { ...r, population: Math.max(0, newPopulation), problems: data.updatedProblems || r.problems }
+        ? { 
+            ...r, 
+            population: populationChange.newPopulation, 
+            problems: updatedProblems || r.problems,
+            notableCharacters: updatedCharacters,
+            history: [...r.history, newHistoryEntry]
+          }
         : r
       );
       
@@ -121,14 +139,14 @@ export default function Dashboard({ worldId }: { worldId: string }) {
 
       updateWorld({
         ...world,
-        currentYear: data.newYear,
+        currentYear: newYear,
         races: updatedRaces,
         population: totalPopulation,
-        narrativeLog: [...world.narrativeLog, ...newEntries],
+        narrativeLog: [...world.narrativeLog], // Keep old log for now
       });
       toast({
         title: `Time advanced by ${years} year(s).`,
-        description: `The year is now ${data.newYear}.`,
+        description: `The year is now ${newYear}.`,
       });
     } else {
       toast({
@@ -201,24 +219,23 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                         <TabsTrigger value="politics"><Landmark className="mr-2 h-4 w-4" />Politics</TabsTrigger>
                         <TabsTrigger value="graveyard"><Skull className="mr-2 h-4 w-4" />Graveyard</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="overview" className="pt-6 space-y-6">
+                    <TabsContent value="overview" className="pt-6">
                         <OverviewTab race={race} />
-                        <ProblemsTab problems={race.problems || []} />
                     </TabsContent>
-                    <TabsContent value="characters">
-                        <CharactersTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} activeRaceId={race.id} />
+                    <TabsContent value="characters" className="pt-6">
+                        <CharactersTab race={race} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
                     </TabsContent>
-                     <TabsContent value="history">
-                        <HistoryTab world={world} />
+                     <TabsContent value="history" className="pt-6">
+                        <HistoryTab race={race} />
                     </TabsContent>
-                     <TabsContent value="culture">
+                     <TabsContent value="culture" className="pt-6">
                         <RacesTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
                     </TabsContent>
-                     <TabsContent value="politics">
+                     <TabsContent value="politics" className="pt-6">
                         <PoliticsTab />
                     </TabsContent>
-                    <TabsContent value="graveyard">
-                        <GraveyardTab world={world} activeRaceId={race.id} />
+                    <TabsContent value="graveyard" className="pt-6">
+                        <GraveyardTab race={race} />
                     </TabsContent>
                 </Tabs>
              </TabsContent>

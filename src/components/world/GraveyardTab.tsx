@@ -7,18 +7,17 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import type { World } from '@/types/world';
+import type { Race } from '@/types/world';
 import { Skull } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { ScrollArea } from '../ui/scroll-area';
 
 type TabProps = {
-  world: World;
-  activeRaceId: string;
+  race: Race;
 };
 
-export function GraveyardTab({ world, activeRaceId }: TabProps) {
-    const deadCharacters = world.notableCharacters.filter(c => c.raceId === activeRaceId && c.status === 'dead');
+export function GraveyardTab({ race }: TabProps) {
+    const deadCharacters = race.notableCharacters.filter(c => c.status === 'dead');
 
   return (
     <Card>
@@ -31,14 +30,14 @@ export function GraveyardTab({ world, activeRaceId }: TabProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[600px] pr-4">
+        <ScrollArea className="h-[700px] pr-4">
             {deadCharacters.length > 0 ? (
                  <div className='grid md:grid-cols-2 gap-4'>
                     {deadCharacters.map(character => (
-                        <Card key={character.id} className="bg-muted/30">
+                        <Card key={character.id} className="bg-card/50 opacity-80">
                             <CardHeader>
                                 <CardTitle className='text-xl font-headline'>{character.name}</CardTitle>
-                                <CardDescription>Died in Year {character.deathYear}</CardDescription>
+                                <CardDescription>Died in Year {character.deathYear} at age {character.age}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <p className='text-sm italic text-muted-foreground'>"{character.deathNarrative || 'No final words were recorded.'}"</p>
@@ -47,7 +46,7 @@ export function GraveyardTab({ world, activeRaceId }: TabProps) {
                     ))}
                  </div>
             ) : (
-                <div className='flex flex-col items-center justify-center text-center py-16 text-muted-foreground'>
+                <div className='flex flex-col items-center justify-center text-center py-16 text-muted-foreground h-96'>
                     <Skull className="w-16 h-16 mb-4" />
                     <p>The graveyard is currently empty for this race.</p>
                     <p className='text-sm'>No notable figures have fallen... yet.</p>

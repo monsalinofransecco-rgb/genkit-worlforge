@@ -1,6 +1,6 @@
 'use client';
 
-import type { World, Race } from '@/types/world';
+import type { World, Race, HistoryEntry, NotableCharacter } from '@/types/world';
 
 const WORLDS_STORAGE_KEY = 'worldforge-chronicles-worlds';
 
@@ -17,7 +17,33 @@ function safeJsonParse<T>(json: string | null): T | null {
 export function getWorlds(): World[] {
   if (typeof window === 'undefined') return [];
   const worldsJson = localStorage.getItem(WORLDS_STORAGE_KEY);
-  return safeJsonParse<World[]>(worldsJson) || [];
+  const worlds = safeJsonParse<World[]>(worldsJson) || [];
+  // Data migration for older world structures
+  return worlds.map(world => {
+    return {
+      ...world,
+      races: world.races.map(race => {
+        const history: HistoryEntry[] = race.history || [];
+        const notableCharacters: NotableCharacter[] = (race.notableCharacters || (world as any).notableCharacters || []).map((c: any) => ({
+            ...c,
+            personalLog: c.personalLog || [],
+            traits: c.traits || [],
+            skills: c.skills || [],
+            specialTraits: c.specialTraits || [],
+        }));
+
+        return {
+          ...race,
+          history,
+          notableCharacters,
+          status: race.status || "Emerging",
+          religion: race.religion || { name: "Animism" },
+          government: race.government || { name: "Tribal" },
+        };
+      }),
+      notableCharacters: [], // Moved to race level
+    };
+  });
 }
 
 export function getWorldById(id: string): World | null {
@@ -61,6 +87,11 @@ export function createPreliminaryWorld(name: string, raceCount: number): World {
         racePoints: 100,
         activeBoons: [],
         problems: [],
+        notableCharacters: [],
+        history: [],
+        status: "Emerging",
+        religion: { name: "Animism" },
+        government: { name: "Tribal" },
       })),
       population: 0,
       significantEvents: [`The world of ${name} was forged.`],
@@ -72,43 +103,8 @@ export function createPreliminaryWorld(name: string, raceCount: number): World {
           content: `In the beginning, the world of ${name} was created, marking the start of the Primal Era.`,
         },
       ],
-      notableCharacters: [],
     };
 
     saveWorld(newWorld);
     return newWorld;
-}
-
-// Kept for backwards compatibility or potential future use, but might be deprecated.
-export function createWorld(name: string, era: string, raceCount: number): World {
-  const newWorld: World = {
-    id: crypto.randomUUID(),
-    name,
-    era,
-    currentYear: 0,
-    races: Array.from({ length: raceCount }, (_, i) => {
-        const raceId = crypto.randomUUID();
-        return {
-            id: raceId,
-            name: `Unnamed Race ${raceId}`,
-            population: 1000,
-            racePoints: 100,
-            activeBoons: [],
-            problems: [],
-        }
-    }),
-    population: 1000 * raceCount,
-    significantEvents: [`The world of ${name} was forged in the ${era}.`],
-    cataclysmPreparations: 'None',
-    narrativeLog: [
-      {
-        year: 0,
-        type: 'narrative',
-        content: `In the beginning, the world of ${name} was created, marking the start of the ${era}.`,
-      },
-    ],
-    notableCharacters: [],
-  };
-  saveWorld(newWorld);
-  return newWorld;
 }
