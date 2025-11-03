@@ -1,10 +1,10 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
+import type { Metadata } from "next";
+import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'WorldForge Chronicles',
-  description: 'Forge your own world and watch its history unfold.',
+  title: "WorldForge Chronicles",
+  description: "Forge your own world and watch its history unfold.",
 };
 
 export default function RootLayout({

@@ -216,5 +216,3 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
-
-    
