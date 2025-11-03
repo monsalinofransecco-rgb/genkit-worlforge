@@ -6,7 +6,6 @@ export interface World {
   races: Race[];
   population: number;
   significantEvents: string[];
-  boons: string[];
   cataclysmPreparations: string;
   narrativeLog: NarrativeEntry[];
   notableCharacters: NotableCharacter[];
@@ -18,7 +17,9 @@ export interface Race {
   population: number;
   namingProfile?: NamingProfile;
   racePoints: number;
-  activeBoons: string[];
+  activeBoons: BoonId[];
+  traits?: string;
+  location?: string;
 }
 
 export interface NamingProfile {

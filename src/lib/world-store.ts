@@ -37,23 +37,53 @@ export function saveWorld(world: World): void {
   localStorage.setItem(WORLDS_STORAGE_KEY, JSON.stringify(worlds));
 }
 
+// Preliminary world creation
+export function createPreliminaryWorld(name: string, raceCount: number): World {
+    const worldId = "world_" + Date.now();
+    const cataclysmType = ["flood", "volcano", "blight"][Math.floor(Math.random() * 3)];
+
+    const newWorld: World = {
+      id: worldId,
+      name: name,
+      era: "Primal Era",
+      currentYear: 1,
+      races: [], // Races will be added in the next step
+      population: 0,
+      significantEvents: [`The world of ${name} was forged.`],
+      cataclysmPreparations: 'None',
+      narrativeLog: [
+        {
+          year: 1,
+          type: 'narrative',
+          content: `In the beginning, the world of ${name} was created, marking the start of the Primal Era.`,
+        },
+      ],
+      notableCharacters: [],
+    };
+
+    saveWorld(newWorld);
+    return newWorld;
+}
+
+// Kept for backwards compatibility or potential future use, but might be deprecated.
 export function createWorld(name: string, era: string, raceCount: number): World {
-  const worlds = getWorlds();
   const newWorld: World = {
     id: crypto.randomUUID(),
     name,
     era,
     currentYear: 0,
-    races: Array.from({ length: raceCount }, (_, i) => ({
-      id: crypto.randomUUID(),
-      name: `Unnamed Race ${i + 1}`,
-      population: 1000,
-      racePoints: 100, // Starting RP
-      activeBoons: [], // Initialize activeBoons
-    })),
+    races: Array.from({ length: raceCount }, (_, i) => {
+        const raceId = crypto.randomUUID();
+        return {
+            id: raceId,
+            name: `Unnamed Race ${raceId}`,
+            population: 1000,
+            racePoints: 100,
+            activeBoons: [],
+        }
+    }),
     population: 1000 * raceCount,
     significantEvents: [`The world of ${name} was forged in the ${era}.`],
-    boons: [], // This is legacy, activeBoons on race is now used.
     cataclysmPreparations: 'None',
     narrativeLog: [
       {
@@ -64,7 +94,6 @@ export function createWorld(name: string, era: string, raceCount: number): World
     ],
     notableCharacters: [],
   };
-  worlds.push(newWorld);
-  localStorage.setItem(WORLDS_STORAGE_KEY, JSON.stringify(worlds));
+  saveWorld(newWorld);
   return newWorld;
 }
