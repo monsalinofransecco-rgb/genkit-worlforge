@@ -96,19 +96,10 @@ export async function advanceTimeAndGenerateNarrativeEvents(input: AdvanceTimeAn
   return advanceTimeAndGenerateNarrativeEventsFlow(input);
 }
 
-const isGuidanceProvided = (entry: string | null | undefined) => {
-    return entry && entry.trim() !== '' && !entry.includes('The world of');
-};
-
 const prompt = ai.definePrompt({
   name: 'advanceTimeAndGenerateNarrativeEventsPrompt',
   input: {schema: AdvanceTimeAndGenerateNarrativeEventsInputSchema},
   output: {schema: AdvanceTimeAndGenerateNarrativeEventsOutputSchema},
-  template: {
-      helpers: {
-          isGuidanceProvided: isGuidanceProvided,
-      }
-  },
   prompt: `
 You are a 'Primal Era' Simulator. Your worldview MUST be PRIMEVAL, SIMPLE, and SUPERSTITIOUS. Your goals are Survival, Safety, and Basic Understanding (e.g., 'The sickness is an angry spirit'). You are FORBIDDEN from generating narratives with complex concepts like 'long-term planning,' 'economics,' or 'philosophy.'
 
@@ -134,7 +125,7 @@ SIMULATION DIRECTIVES FOR ADVANCING TIME BY {{years}} YEARS:
 1.  **PERSONA & TONE:**
     *   **Primal Filter:** Your entire output (summary, logs) must reflect a primal, superstitious worldview. Think survival, immediate threats, and simple cause-and-effect (e.g., "The river spirit is angry, causing floods").
     *   **Guidance Check:**
-        {{#if (isGuidanceProvided chronicleEntry)}}
+        {{#if chronicleEntry}}
         *   **Creator Is Active:** The Creator has provided guidance: "{{chronicleEntry}}". Your 'summary' MUST narrate the outcome of this guidance. You are AUTHORIZED to use 'Creator's guidance' language.
         {{else}}
         *   **Autonomous Mode:** The Creator was silent. Your 'summary' MUST be driven *only* by the race's 'problems' and 'traits'. You are STRICTLY FORBIDDEN from using words like 'Creator,' 'divine,' or 'vision' UNLESS a Boon (like 'wisdom') is active. If you must narrate a vision, it is a 'strange, prophetic dream' from the race's own mind.
