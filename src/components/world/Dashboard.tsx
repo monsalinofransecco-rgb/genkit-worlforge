@@ -67,7 +67,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
           <OverviewTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
         </TabsContent>
         <TabsContent value="influence">
-          <InfluenceTab world={world} setWorld={updateWorld} />
+          <InfluenceTab world={world} setWorld={updateWorld} isLoading={isLoading} />
         </TabsContent>
         <TabsContent value="races">
           <RacesTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />

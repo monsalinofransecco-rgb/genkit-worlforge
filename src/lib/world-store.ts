@@ -48,10 +48,12 @@ export function createWorld(name: string, era: string, raceCount: number): World
       id: crypto.randomUUID(),
       name: `Unnamed Race ${i + 1}`,
       population: 1000,
+      racePoints: 100, // Starting RP
+      activeBoons: [],
     })),
     population: 1000 * raceCount,
     significantEvents: [`The world of ${name} was forged in the ${era}.`],
-    boons: [],
+    boons: [], // This is legacy, activeBoons on race is now used.
     cataclysmPreparations: 'None',
     narrativeLog: [
       {

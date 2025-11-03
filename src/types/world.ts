@@ -17,6 +17,8 @@ export interface Race {
   name: string;
   population: number;
   namingProfile?: NamingProfile;
+  racePoints: number;
+  activeBoons: string[];
 }
 
 export interface NamingProfile {
@@ -49,4 +51,12 @@ export interface NotableCharacter {
   deathNarrative?: string;
 }
 
-export type Boon = 'fertility' | 'strength' | 'wisdom' | 'resilience';
+export type BoonId = 'fertility' | 'strength' | 'wisdom' | 'resilience';
+
+export interface Boon {
+  id: BoonId;
+  name: string;
+  description: string;
+  cost: number;
+  icon: React.ReactNode;
+}
