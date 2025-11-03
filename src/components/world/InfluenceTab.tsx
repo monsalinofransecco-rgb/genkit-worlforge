@@ -103,59 +103,43 @@ export function InfluenceTab({ world, setWorld, isLoading, activeRaceId }: TabPr
   }
 
   return (
-    <div className="grid gap-6">
-       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="font-headline flex items-center">
-                <Sparkles className="mr-2 text-primary" /> Creator's Store
-              </CardTitle>
-              <CardDescription>
-                Spend Race Points (RP) to bestow blessings upon the {activeRace.name}.
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2 font-bold text-lg text-primary bg-primary/10 px-3 py-1.5 rounded-md">
-              <Gem className="h-5 w-5" />
-              <span>{activeRace.racePoints} RP</span>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-4 pt-4">
-            {creatorStoreBoons.map((boon) => {
-              const isAcquired = (activeRace.activeBoons || []).includes(boon.id);
-              const canAfford = activeRace.racePoints >= boon.cost;
+    <div className="grid gap-6 pt-4">
+       <div className='flex items-center justify-end gap-2 font-bold text-lg text-primary bg-primary/10 px-3 py-1.5 rounded-md'>
+            <Gem className="h-5 w-5" />
+            <span>{activeRace.racePoints} RP</span>
+        </div>
+      <div className="space-y-4">
+        {creatorStoreBoons.map((boon) => {
+          const isAcquired = (activeRace.activeBoons || []).includes(boon.id);
+          const canAfford = activeRace.racePoints >= boon.cost;
 
-              return (
-                <div
-                  key={boon.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                >
-                  <div className="flex items-center gap-4">
-                    {boon.icon}
-                    <div>
-                      <Label
-                        htmlFor={`boon-${boon.id}-${activeRace.id}`}
-                        className="font-semibold"
-                      >
-                        {boon.name}
-                      </Label>
-                       <p className="text-xs text-muted-foreground">{boon.description} (Cost: {boon.cost} RP)</p>
-                    </div>
-                  </div>
-                  <Switch
-                    id={`boon-${boon.id}-${activeRace.id}`}
-                    checked={isAcquired}
-                    onCheckedChange={(isActive) => onBoonToggle(boon.id, isActive)}
-                    disabled={isLoading || (!isAcquired && !canAfford)}
-                  />
+          return (
+            <div
+              key={boon.id}
+              className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+            >
+              <div className="flex items-center gap-4">
+                {boon.icon}
+                <div>
+                  <Label
+                    htmlFor={`boon-${boon.id}-${activeRace.id}`}
+                    className="font-semibold"
+                  >
+                    {boon.name}
+                  </Label>
+                    <p className="text-xs text-muted-foreground">{boon.description} (Cost: {boon.cost} RP)</p>
                 </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+              <Switch
+                id={`boon-${boon.id}-${activeRace.id}`}
+                checked={isAcquired}
+                onCheckedChange={(isActive) => onBoonToggle(boon.id, isActive)}
+                disabled={isLoading || (!isAcquired && !canAfford)}
+              />
+            </div>
+          );
+        })}
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="font-headline flex items-center">

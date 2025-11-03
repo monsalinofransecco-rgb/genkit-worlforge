@@ -141,7 +141,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-start">
                 <div className='text-center flex-grow'>
                     <CardTitle className="font-headline text-4xl md:text-5xl text-primary">
                         {world.name}
@@ -150,11 +150,20 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                 </div>
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" aria-label="Open Creator's Store">
                             <Store className="h-6 w-6 text-primary" />
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle className="font-headline flex items-center gap-2">
+                                <Sparkles className="text-primary" />
+                                Creator's Store
+                            </DialogTitle>
+                            <DialogDescription>
+                                Spend Race Points (RP) to bestow blessings upon the {activeRace.name}.
+                            </DialogDescription>
+                        </DialogHeader>
                        <InfluenceTab world={world} setWorld={updateWorld} isLoading={isLoading} activeRaceId={activeRaceId} />
                     </DialogContent>
                 </Dialog>
