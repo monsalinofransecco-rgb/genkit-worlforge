@@ -14,12 +14,30 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OverviewTab } from './OverviewTab';
-import { InfluenceTab } from './InfluenceTab';
-import { RacesTab } from './RacesTab';
 import { DangersTab } from './DangersTab';
-import { History, Shield, Sparkles, Users, Skull, Bot, FileText, Swords } from 'lucide-react';
+import { History, Shield, Users, Skull, FileText, Swords, Sparkles, BookOpen, Hand, Landmark } from 'lucide-react';
 import { GraveyardTab } from './GraveyardTab';
 import { CharactersTab } from './CharactersTab';
+import { RacesTab } from './RacesTab';
+import { PoliticsTab } from './PoliticsTab';
+import { Button } from '../ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { runAdvanceTime } from '@/app/actions';
+import { Loader2, CalendarPlus, CalendarClock, Gem } from 'lucide-react';
+
+function StatCard({ title, value, icon }: { title: string, value: string | number, icon: React.ReactNode }) {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                {icon}
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+            </CardContent>
+        </Card>
+    )
+}
 
 
 export default function Dashboard({ worldId }: { worldId: string }) {
@@ -27,6 +45,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
   const [activeRaceId, setActiveRaceId] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsMounted(true);
@@ -44,14 +63,70 @@ export default function Dashboard({ worldId }: { worldId: string }) {
     saveWorld(updatedWorld);
   };
   
+  const handleTimeAdvance = async (years: 1 | 10) => {
+    if (!world) return;
+    setIsLoading(true);
+    const result = await runAdvanceTime({
+      years,
+      worldName: world.name,
+      currentYear: world.currentYear,
+      raceCount: world.races.length,
+      population: world.population,
+      significantEvents: world.significantEvents.join('\n'),
+      boons: world.races.flatMap(r => r.activeBoons || []).join(', ') || 'None',
+      cataclysmPreparations: world.cataclysmPreparations,
+    });
+    setIsLoading(false);
+
+    if (result.success && result.data) {
+      const { data } = result;
+      const newEntries = [
+        { year: data.newYear, type: 'narrative' as const, content: data.narrativeEvents },
+        { year: data.newYear, type: 'population' as const, content: data.populationChanges },
+        { year: data.newYear, type: 'character' as const, content: data.characterLifecycleUpdates },
+        { year: data.newYear, type: 'problem' as const, content: data.problemSimulations },
+        { year: data.newYear, type: 'society' as const, content: data.societalEvolutions },
+        { year: data.newYear, type: 'discovery' as const, content: data.geographicalDiscoveries },
+      ].filter(entry => entry.content && entry.content.trim() !== '' && !entry.content.toLowerCase().includes('n/a'));
+
+      const popChangeMatch = data.populationChanges.match(/by approximately ([\d,]+)/);
+      const popChange = popChangeMatch ? parseInt(popChangeMatch[1].replace(/,/g, ''), 10) : years * 100;
+      
+      let newPopulation = world.population;
+      if (data.populationChanges.includes('increased') || data.populationChanges.includes('grew')) {
+        newPopulation += popChange;
+      } else if (data.populationChanges.includes('decreased') || data.populationChanges.includes('declined')) {
+        newPopulation -= popChange;
+      }
+
+      updateWorld({
+        ...world,
+        currentYear: data.newYear,
+        population: Math.max(0, newPopulation),
+        narrativeLog: [...world.narrativeLog, ...newEntries],
+      });
+      toast({
+        title: `Time advanced by ${years} year(s).`,
+        description: `The year is now ${data.newYear}.`,
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Error Advancing Time',
+        description: result.error,
+      });
+    }
+  };
+
   const activeRace = world?.races.find(r => r.id === activeRaceId);
 
   if (!isMounted) {
     return <DashboardSkeleton />;
   }
 
-  if (!world) {
-    notFound();
+  if (!world || !activeRace) {
+    if (isMounted) notFound();
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -73,50 +148,55 @@ export default function Dashboard({ worldId }: { worldId: string }) {
         </TabsList>
         {world.races.map(race => (
              <TabsContent key={race.id} value={race.id}>
-                <Tabs defaultValue="simulation-cycle" className="w-full mt-4">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="simulation-cycle"><Bot className="mr-2 h-4 w-4" />Simulation Cycle</TabsTrigger>
-                        <TabsTrigger value="data-logs"><FileText className="mr-2 h-4 w-4" />Data Logs</TabsTrigger>
+                <div className="grid md:grid-cols-3 gap-4 mb-6">
+                    <StatCard title="Population" value={race.population.toLocaleString()} icon={<Users className="text-muted-foreground" />} />
+                    <StatCard title="General Status" value={race.traits ? 'Defined' : 'Nascent'} icon={<BookOpen className="text-muted-foreground" />} />
+                    <StatCard title="Race Points" value={race.racePoints} icon={<Gem className="text-muted-foreground" />} />
+                    <StatCard title="Politics" value="Tribal" icon={<Landmark className="text-muted-foreground" />} />
+                    <StatCard title="Culture" value="Nascent" icon={<Sparkles className="text-muted-foreground" />} />
+                    <StatCard title="Location" value={race.location || "Not Set"} icon={<Hand className="text-muted-foreground" />} />
+                </div>
+                <Tabs defaultValue="overview" className="w-full mt-4">
+                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-6">
+                        <TabsTrigger value="overview"><FileText className="mr-2 h-4 w-4" />Overview</TabsTrigger>
+                        <TabsTrigger value="characters"><Users className="mr-2 h-4 w-4" />Characters</TabsTrigger>
+                        <TabsTrigger value="history"><History className="mr-2 h-4 w-4" />History</TabsTrigger>
+                        <TabsTrigger value="culture"><Sparkles className="mr-2 h-4 w-4" />Culture</TabsTrigger>
+                        <TabsTrigger value="politics"><Landmark className="mr-2 h-4 w-4" />Politics</TabsTrigger>
+                        <TabsTrigger value="graveyard"><Skull className="mr-2 h-4 w-4" />Graveyard</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="simulation-cycle">
-                        <div className="grid md:grid-cols-2 gap-6 mt-4">
-                           <OverviewTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
-                           <InfluenceTab world={world} setWorld={updateWorld} isLoading={isLoading} activeRaceId={race.id} />
-                        </div>
+                    <TabsContent value="overview">
+                        <OverviewTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
                     </TabsContent>
-                    <TabsContent value="data-logs">
-                        <div className="mt-4">
-                        <Tabs defaultValue="characters" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
-                                <TabsTrigger value="characters"><Users className="mr-2 h-4 w-4" />Characters</TabsTrigger>
-                                <TabsTrigger value="history"><History className="mr-2 h-4 w-4" />History</TabsTrigger>
-                                <TabsTrigger value="dangers"><Shield className="mr-2 h-4 w-4" />Dangers</TabsTrigger>
-                                <TabsTrigger value="races"><Sparkles className="mr-2 h-4 w-4" />Culture</TabsTrigger>
-                                <TabsTrigger value="graveyard"><Skull className="mr-2 h-4 w-4" />Graveyard</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="characters">
-                                <CharactersTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} activeRaceId={race.id} />
-                            </TabsContent>
-                             <TabsContent value="history">
-                                {/* The overview tab contains the narrative log which is the history */}
-                                <OverviewTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} showStats={false} />
-                            </TabsContent>
-                             <TabsContent value="dangers">
-                                <DangersTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
-                            </TabsContent>
-                            <TabsContent value="races">
-                                <RacesTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
-                            </TabsContent>
-                            <TabsContent value="graveyard">
-                                <GraveyardTab world={world} activeRaceId={race.id} />
-                            </TabsContent>
-                        </Tabs>
-                        </div>
+                    <TabsContent value="characters">
+                        <CharactersTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} activeRaceId={race.id} />
+                    </TabsContent>
+                     <TabsContent value="history">
+                        <OverviewTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} showStats={false} />
+                    </TabsContent>
+                     <TabsContent value="culture">
+                        <RacesTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
+                    </TabsContent>
+                     <TabsContent value="politics">
+                        <PoliticsTab />
+                    </TabsContent>
+                    <TabsContent value="graveyard">
+                        <GraveyardTab world={world} activeRaceId={race.id} />
                     </TabsContent>
                 </Tabs>
              </TabsContent>
         ))}
       </Tabs>
+      <Card>
+        <CardContent className="flex flex-col sm:flex-row gap-2 p-4 justify-center">
+            <Button onClick={() => handleTimeAdvance(1)} disabled={isLoading} className="w-full">
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CalendarPlus className="mr-2 h-4 w-4" />} Advance 1 Year
+            </Button>
+            <Button onClick={() => handleTimeAdvance(10)} disabled={isLoading} className="w-full">
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CalendarClock className="mr-2 h-4 w-4" />} Advance 10 Years
+            </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
