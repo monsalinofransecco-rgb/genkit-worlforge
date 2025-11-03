@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, use } from 'react';
@@ -34,8 +35,21 @@ import { useToast } from '@/hooks/use-toast';
 const raceSchema = z.object({
   name: z.string().min(3, 'Race name must be at least 3 characters.'),
   description: z.string().min(10, 'Describe the race.'),
-  racialTraits: z.string().min(3, 'List at least one common trait.'),
-  specialTraits: z.string().optional(),
+  racialTraits: z
+    .string()
+    .min(3, 'List at least one common trait.')
+    .refine(
+      (value) => value.split(',').filter((t) => t.trim()).length <= 5,
+      'You can enter a maximum of 5 racial traits.'
+    ),
+  specialTraits: z
+    .string()
+    .optional()
+    .refine(
+      (value) =>
+        !value || value.split(',').filter((t) => t.trim()).length <= 3,
+      'You can enter a maximum of 3 special traits.'
+    ),
   location: z.string().min(5, 'Describe their starting location.'),
   population: z.number().int().min(100).max(5000).default(1000),
 });
@@ -248,7 +262,7 @@ export default function PopulateRacesPage({
                             name={`races.${index}.racialTraits`}
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Racial Traits</FormLabel>
+                                <FormLabel>Racial Traits (Max 5, comma-separated)</FormLabel>
                                 <FormControl>
                                     <Input
                                     placeholder="e.g., Hardy, Industrious, Stubborn"
@@ -264,7 +278,7 @@ export default function PopulateRacesPage({
                             name={`races.${index}.specialTraits`}
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Special Traits (Optional)</FormLabel>
+                                <FormLabel>Special Traits (Max 3, comma-separated)</FormLabel>
                                 <FormControl>
                                     <Input
                                     placeholder="e.g., Fire Resistance, Night Vision"
@@ -336,5 +350,3 @@ export default function PopulateRacesPage({
     </div>
   );
 }
-
-    
