@@ -96,10 +96,19 @@ export async function advanceTimeAndGenerateNarrativeEvents(input: AdvanceTimeAn
   return advanceTimeAndGenerateNarrativeEventsFlow(input);
 }
 
+const isGuidanceProvided = (entry: string | null | undefined) => {
+    return entry && entry.trim() !== '' && !entry.includes('The world of');
+};
+
 const prompt = ai.definePrompt({
   name: 'advanceTimeAndGenerateNarrativeEventsPrompt',
   input: {schema: AdvanceTimeAndGenerateNarrativeEventsInputSchema},
   output: {schema: AdvanceTimeAndGenerateNarrativeEventsOutputSchema},
+  template: {
+      helpers: {
+          isGuidanceProvided: isGuidanceProvided,
+      }
+  },
   prompt: `
 You are a 'Primal Era' Simulator. Your worldview MUST be PRIMEVAL, SIMPLE, and SUPERSTITIOUS. Your goals are Survival, Safety, and Basic Understanding (e.g., 'The sickness is an angry spirit'). You are FORBIDDEN from generating narratives with complex concepts like 'long-term planning,' 'economics,' or 'philosophy.'
 
