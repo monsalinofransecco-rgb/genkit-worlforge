@@ -7,26 +7,49 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { getWorlds } from '@/lib/world-store';
+import { getWorlds, deleteWorld } from '@/lib/world-store';
 import type { World } from '@/types/world';
 import Header from '@/components/Header';
-import { BookOpen, PlusCircle } from 'lucide-react';
+import { BookOpen, PlusCircle, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function Home() {
   const router = useRouter();
   const [worlds, setWorlds] = useState<World[]>([]);
+  const [worldToDelete, setWorldToDelete] = useState<World | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
     const savedWorlds = getWorlds();
-    // Filter out any preliminary worlds that haven't been fully forged
-    setWorlds(savedWorlds.filter(w => w.races.length > 0 && w.races.every(r => r.name !== `Unnamed Race ${r.id}`)));
+    setWorlds(savedWorlds.filter(w => w.races.length > 0 && w.races.every(r => r.name !== '')));
   }, []);
+
+  const openDeleteDialog = (world: World) => {
+    setWorldToDelete(world);
+  };
+
+  const confirmDelete = () => {
+    if (worldToDelete) {
+      deleteWorld(worldToDelete.id);
+      setWorlds(worlds.filter(w => w.id !== worldToDelete.id));
+      setWorldToDelete(null);
+    }
+  };
 
   if (!isMounted) {
     return null; // or a loading skeleton
@@ -67,8 +90,8 @@ export default function Home() {
               </CardHeader>
               <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {worlds.map((world) => (
-                  <Link key={world.id} href={`/world/${world.id}`} passHref>
-                    <Card className="hover:border-primary hover:shadow-lg transition-all transform hover:-translate-y-1">
+                  <Card key={world.id} className="flex flex-col hover:border-primary transition-colors">
+                     <Link href={`/world/${world.id}`} passHref className='flex-grow'>
                       <CardHeader>
                         <CardTitle className="truncate">{world.name}</CardTitle>
                         <CardDescription>{world.era}</CardDescription>
@@ -81,14 +104,40 @@ export default function Home() {
                           Races: {world.races.length}
                         </p>
                       </CardContent>
-                    </Card>
-                  </Link>
+                    </Link>
+                    <CardFooter className='p-2 pt-0'>
+                        <Button variant="ghost" size="icon" className="ml-auto text-muted-foreground hover:text-destructive h-8 w-8" onClick={(e) => {
+                            e.stopPropagation();
+                            openDeleteDialog(world);
+                        }}>
+                            <Trash2 className='h-4 w-4'/>
+                        </Button>
+                    </CardFooter>
+                  </Card>
                 ))}
               </CardContent>
             </Card>
           )}
         </div>
       </main>
+
+       <AlertDialog open={!!worldToDelete} onOpenChange={() => setWorldToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the world of{' '}
+              <span className='font-bold text-primary'>{worldToDelete?.name}</span> and all of its history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -37,6 +37,14 @@ export function saveWorld(world: World): void {
   localStorage.setItem(WORLDS_STORAGE_KEY, JSON.stringify(worlds));
 }
 
+export function deleteWorld(worldId: string): void {
+  if (typeof window === 'undefined') return;
+  const worlds = getWorlds();
+  const newWorlds = worlds.filter(w => w.id !== worldId);
+  localStorage.setItem(WORLDS_STORAGE_KEY, JSON.stringify(newWorlds));
+}
+
+
 // Preliminary world creation
 export function createPreliminaryWorld(name: string, raceCount: number): World {
     const worldId = "world_" + Date.now();
@@ -102,5 +110,3 @@ export function createWorld(name: string, era: string, raceCount: number): World
   saveWorld(newWorld);
   return newWorld;
 }
-
-    
