@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getWorldById, saveWorld } from '@/lib/world-store';
-import type { World, HistoryEntry, NotableCharacter, Race } from '@/types/world';
+import type { World, HistoryEntry, NotableCharacter, Race, DeathDetails } from '@/types/world';
 import { notFound } from 'next/navigation';
 import {
   Card,
@@ -91,7 +91,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
           const raceResult = raceResults.find(res => res.raceId === originalRace.id);
           if (!raceResult) return originalRace;
 
-          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries } = raceResult;
+          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths } = raceResult;
 
           const newHistoryEntry: HistoryEntry = {
               year: newYear,
@@ -101,8 +101,39 @@ export default function Dashboard({ worldId }: { worldId: string }) {
               emergenceReason,
           };
 
-          const updatedCharacters = [...originalRace.notableCharacters];
+          let updatedCharacters = [...originalRace.notableCharacters];
 
+          // Process notable deaths
+          (fallenNotableCharacters || []).forEach(fallen => {
+              const charIndex = updatedCharacters.findIndex(c => c.id === fallen.characterId);
+              if (charIndex !== -1) {
+                  updatedCharacters[charIndex].status = 'dead';
+                  updatedCharacters[charIndex].deathDetails = fallen.deathDetails;
+                  updatedCharacters[charIndex].deathYear = newYear;
+              }
+          });
+
+          // Process commoner deaths
+          (namedCommonerDeaths || []).forEach(commoner => {
+              const newDeadCharacter: NotableCharacter = {
+                  id: crypto.randomUUID(),
+                  name: commoner.name,
+                  raceId: originalRace.id,
+                  status: 'dead',
+                  deathYear: newYear,
+                  deathDetails: commoner.deathDetails,
+                  title: commoner.title,
+                  age: commoner.ageAtDeath,
+                  class: 'Commoner',
+                  ambition: 'Survival',
+                  traits: [],
+                  skills: [],
+                  specialTraits: [],
+                  personalLog: [],
+              };
+              updatedCharacters.push(newDeadCharacter);
+          });
+          
           // Add new character if one emerged
           if (newCharacter) {
               const fullNewCharacter: NotableCharacter = {
@@ -116,7 +147,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
 
           // Add new personal log entries to existing characters
           characterLogEntries.forEach(log => {
-              const charIndex = updatedCharacters.findIndex(c => c.id === log.characterId);
+              const charIndex = updatedCharacters.findIndex(c => c.id === log.characterId && c.status === 'alive');
               if (charIndex > -1) {
                   updatedCharacters[charIndex].personalLog.push({ year: newYear, entry: log.logEntry });
               }

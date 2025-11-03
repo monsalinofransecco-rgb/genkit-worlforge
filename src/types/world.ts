@@ -27,13 +27,20 @@ export interface PersonalLogEntry {
     characterName?: string; // Optional: May not be needed if logs are nested in character
 }
 
+export interface DeathDetails {
+    reason: string;
+    favoriteThing: string;
+    happiestMemory: string;
+    lastThought: string;
+}
+
 export interface NotableCharacter {
   id: string;
   name: string;
   raceId: string;
   status: 'alive' | 'dead';
   deathYear?: number;
-  deathNarrative?: string;
+  deathDetails?: DeathDetails;
   // Character Sheet fields
   title: string;
   age: number;

@@ -48,6 +48,26 @@ const CharacterLogEntrySchema = z.object({
     logEntry: z.string().describe("The new personal log entry, written in the first person, reflecting on the era's events.")
 });
 
+const DeathDetailsSchema = z.object({
+    reason: z.string().describe("The cause of death, tied to the era's events."),
+    favoriteThing: z.string().describe("Something simple the character cherished in life."),
+    happiestMemory: z.string().describe("The character's fondest memory."),
+    lastThought: z.string().describe("The character's final thought, written as a short, italicized quote.")
+});
+
+const FallenNotableCharacterSchema = z.object({
+    characterId: z.string().describe("The ID of the notable character who has died."),
+    deathDetails: DeathDetailsSchema.describe("The detailed, emotional epitaph for the character."),
+});
+
+const NamedCommonerDeathSchema = z.object({
+    name: z.string().describe("A new, culturally-appropriate name for the deceased commoner."),
+    title: z.string().describe("A simple title for the commoner (e.g., 'a young hunter', 'an old farmer')."),
+    ageAtDeath: z.number().describe("The age at which the commoner died."),
+    deathDetails: DeathDetailsSchema.describe("The detailed, emotional epitaph for the commoner.")
+});
+
+
 // Schemas for the main flow
 const ProblemSchema = z.object({
     id: z.string(),
@@ -79,7 +99,7 @@ export type AdvanceTimeAndGenerateNarrativeEventsInput = z.infer<typeof AdvanceT
 
 const RaceSimulationResultSchema = z.object({
     raceId: z.string().describe("The ID of the race that was simulated."),
-    summary: z.string().describe("A 3rd person, 'historian' voice summary of the main events, successes, and failures for this race during the era. This MUST be written from a PRIMAL, SIMPLE, and SUPERSTITIOUS perspective."),
+    summary: z.string().describe("A 3rd person, 'historian' voice summary of the main events, successes, and failures for this race during the era. This MUST be written from a PRIMAL, SIMPLE, and SUPERSTITIOUS perspective. It MUST mention the total number of deaths and name one or two significant fallen individuals."),
     populationChange: z.object({
         born: z.number().describe("Number of births during this period."),
         died: z.number().describe("Number of deaths during this period."),
@@ -90,6 +110,8 @@ const RaceSimulationResultSchema = z.object({
     updatedProblems: z.array(ProblemSchema).describe('The updated list of all active problems after the simulation for this race.'),
     newCharacter: NewCharacterSchema.optional().describe("The full data for a new notable character, if one emerged this era for this race."),
     characterLogEntries: z.array(CharacterLogEntrySchema).describe("An array of new personal log entries, one for EACH living character for this race passed in the input."),
+    fallenNotableCharacters: z.array(FallenNotableCharacterSchema).optional().describe("A list of existing notable characters who died this era."),
+    namedCommonerDeaths: z.array(NamedCommonerDeathSchema).max(3).optional().describe("A list of 2-3 newly named commoners who died this era to give a face to the death toll.")
 });
 
 const AdvanceTimeAndGenerateNarrativeEventsOutputSchema = z.object({
@@ -138,28 +160,33 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
         {{/if}}
 
 2.  **PROBLEM & EVENT SIMULATION:**
-    *   **Evaluate Existing Problems:** Review the 'chronicleEntry' and 'activeBoons'. If the Creator's actions or a boon directly address a problem, narrate its resolution in the 'summary' and REMOVE it from the 'updatedProblems' list for that race.
-    *   **Escalate Ignored Problems:** If an existing problem was IGNORED, you MUST escalate its severity (e.g., Low -> Medium, High -> Critical) and update its description in 'updatedProblems' to be more dire.
-    *   **Critical Failure:** If a 'Critical' problem was ignored, you MUST generate a catastrophic outcome. The 'populationChange.died' number must be massive, and the 'summary' must be grim.
-    *   **Generate New Problems (Max 3 Total per race):** Based on this era's events, new problems may emerge. Add any new problems to 'updatedProblems'.
-    *   **Apply Boons:** You MUST incorporate the effects of the race's active boons.
-        - 'fertility': Increase populationChange.born.
-        - 'strength': Favorable outcomes in conflicts or physical challenges.
-        - 'wisdom': Narrate a technological or societal advancement.
-        - 'resilience': Describe better recovery from hardships.
+    *   Evaluate 'chronicleEntry' and 'activeBoons'. If they solve a problem, resolve it in the 'summary' and REMOVE it from 'updatedProblems'.
+    *   If a problem was IGNORED, ESCALATE its severity in 'updatedProblems'.
+    *   If a 'Critical' problem was ignored, generate a CATASTROPHIC outcome with a massive 'populationChange.died' number.
+    *   Generate new problems (max 3 total per race) based on events.
+    *   Apply Boon effects: 'fertility' (more born), 'strength' (better conflict outcomes), 'wisdom' (advancement), 'resilience' (better recovery).
 
-3.  **POPULATION SIMULATION:**
-    *   Calculate 'born' and 'died' based on events, problems, and boons. The base death rate is ~2% of the population per year. The base birth rate is ~4%. Adjust based on narrative.
+3.  **DEATH SIMULATION (THE "SOUL"):**
+    *   **Notable Deaths:** Review the `livingCharacters`. Determine if any should die from old age, sickness, or events. If so, you MUST generate a `fallenNotableCharacters` entry for them. You MUST write their detailed, emotional `deathDetails` (reason, favoriteThing, happiestMemory, lastThought).
+    *   **Commoner Deaths:** Look at your `populationChange.died` statistic. To make this number feel real, you MUST "promote" **2-3** of these anonymous deaths into named entries for the `namedCommonerDeaths` array. **Do not exceed 3.**
+        *   For each, invent a new, culturally-appropriate `name`.
+        *   Give them a simple `title` (e.g., 'a young hunter,' 'an old farmer,' 'a brave mother').
+        *   The `deathDetails.reason` for these commoners MUST be tied to the era's `summary` or `events`.
+        *   You MUST write their full, emotionally-tugging `deathDetails`.
+
+4.  **POPULATION & CHARACTER SIMULATION:**
+    *   Calculate 'born' and 'died' based on events. Base death rate is ~2% of population per year, base birth rate is ~4%. Adjust based on narrative.
     *   Calculate 'newPopulation'.
-
-4.  **CHARACTER SIMULATION (THE "SOUL"):**
-    *   **Character Log Entries (MANDATORY):** For **every single living notable character** for a given race, you MUST generate a new personal log entry in 'characterLogEntries'.
-        - Logs MUST be in the **first-person** ('I...') and reflect an emotional, primal perspective.
+    *   **Character Log Entries (MANDATORY):** For **every single living notable character**, generate a new first-person ('I...') personal log entry in 'characterLogEntries'.
     *   **Character Emergence:**
-        - **Max 4 Rule:** If a race has 4 living characters, FORBIDDEN from generating a new one for them.
-        - **Last Spark Rule:** If a race has 0 living characters, you MUST generate 1 new character for them.
-        - **Triggers:** Base emergence on narrative triggers (hardship, talent, boons).
-        - **Output:** If a character emerges, populate the 'newCharacter' object. The 'firstLogEntry' MUST be an emotional thought tied to their 'emergenceReason'.
+        *   **Max 4 Rule:** If a race has 4 living characters, FORBIDDEN from generating a new one.
+        *   **Last Spark Rule:** If a race has 0 living characters, you MUST generate 1 new character.
+        *   Base emergence on narrative triggers (hardship, talent, boons).
+        *   If a character emerges, populate `newCharacter`. The `firstLogEntry` MUST be an emotional thought tied to their `emergenceReason`.
+
+5.  **FINAL SUMMARY:**
+    *   When you write the main `summary`, you MUST include the total `died` statistic (e.g., "...claimed 31 lives...").
+    *   You MUST also mention by name **one or two** of the most significant deaths you just generated (from `fallenNotableCharacters` or `namedCommonerDeaths`).
 
 Your final output MUST be a single JSON object matching the defined output schema, containing a 'newYear' and an array of 'raceResults'.
 `,
@@ -199,6 +226,8 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
                 populationChange: result.populationChange || { born: 0, died: 0, newPopulation: race.population },
                 updatedProblems: result.updatedProblems || race.problems || [],
                 characterLogEntries: result.characterLogEntries || [],
+                fallenNotableCharacters: result.fallenNotableCharacters || [],
+                namedCommonerDeaths: result.namedCommonerDeaths || [],
             };
         }
         // If AI failed to return a result for a race, return a "no change" state
@@ -209,6 +238,8 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
             events: [],
             updatedProblems: race.problems || [],
             characterLogEntries: [],
+            fallenNotableCharacters: [],
+            namedCommonerDeaths: [],
         };
     });
     
