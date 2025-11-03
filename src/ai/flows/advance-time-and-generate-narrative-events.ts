@@ -144,7 +144,6 @@ SIMULATION DIRECTIVES FOR ADVANCING TIME BY {{years}} YEARS:
         - 'strength': Favorable outcomes in conflicts or physical challenges.
         - 'wisdom': Narrate a technological or societal advancement (e.g., better tools, a new ritual).
         - 'resilience': Describe better recovery from hardships or problems.
-    *   **Synthesize Events:** Create a bulleted list of 2-3 notable 'events' that occurred during this time.
 
 3.  **POPULATION SIMULATION:**
     *   Calculate 'born' and 'died' based on the events, problems, and boons. The base death rate is ~2% of the population per year. The base birth rate is ~4%. Adjust these based on the narrative. A famine (died up), a fertility boon (born up).
@@ -207,3 +206,5 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
+
+    
