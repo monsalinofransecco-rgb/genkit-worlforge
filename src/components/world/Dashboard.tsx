@@ -14,8 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OverviewTab } from './OverviewTab';
-import { DangersTab } from './DangersTab';
-import { History, Shield, Users, Skull, FileText, Swords, Sparkles, BookOpen, Hand, Landmark } from 'lucide-react';
+import { History, Shield, Users, Skull, FileText, Swords, Sparkles, BookOpen, Hand, Landmark, Store, Gem } from 'lucide-react';
 import { GraveyardTab } from './GraveyardTab';
 import { CharactersTab } from './CharactersTab';
 import { RacesTab } from './RacesTab';
@@ -23,7 +22,16 @@ import { PoliticsTab } from './PoliticsTab';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { runAdvanceTime } from '@/app/actions';
-import { Loader2, CalendarPlus, CalendarClock, Gem } from 'lucide-react';
+import { Loader2, CalendarPlus, CalendarClock } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { InfluenceTab } from './InfluenceTab';
 
 function StatCard({ title, value, icon }: { title: string, value: string | number, icon: React.ReactNode }) {
     return (
@@ -131,12 +139,26 @@ export default function Dashboard({ worldId }: { worldId: string }) {
 
   return (
     <div className="space-y-6">
-      <Card className="text-center">
+      <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-4xl md:text-5xl text-primary">
-            {world.name}
-          </CardTitle>
-          <CardDescription>Current Year: {world.currentYear} - {world.era}</CardDescription>
+            <div className="flex justify-between items-center">
+                <div className='text-center flex-grow'>
+                    <CardTitle className="font-headline text-4xl md:text-5xl text-primary">
+                        {world.name}
+                    </CardTitle>
+                    <CardDescription>Current Year: {world.currentYear} - {world.era}</CardDescription>
+                </div>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Store className="h-6 w-6 text-primary" />
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                       <InfluenceTab world={world} setWorld={updateWorld} isLoading={isLoading} activeRaceId={activeRaceId} />
+                    </DialogContent>
+                </Dialog>
+            </div>
         </CardHeader>
       </Card>
 

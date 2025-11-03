@@ -36,8 +36,7 @@ export function OverviewTab({ world, setWorld, isLoading, setIsLoading, showStat
   const activeRaceId = world.races.length > 0 ? world.races[0].id : '';
 
   return (
-    <div className="grid gap-6 md:grid-cols-3 pt-6">
-      <div className={showStats ? "md:col-span-2" : "md:col-span-3"}>
+    <div className="pt-6">
         <Card className="h-full">
           <CardHeader>
             <CardTitle className="font-headline flex items-center">
@@ -63,12 +62,6 @@ export function OverviewTab({ world, setWorld, isLoading, setIsLoading, showStat
             </ScrollArea>
           </CardContent>
         </Card>
-      </div>
-      {showStats && (
-      <div className="md:col-span-1 space-y-6">
-         <InfluenceTab world={world} setWorld={setWorld} isLoading={isLoading} activeRaceId={activeRaceId} />
-      </div>
-      )}
     </div>
   );
 }

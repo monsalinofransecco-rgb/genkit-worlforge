@@ -99,7 +99,7 @@ export function InfluenceTab({ world, setWorld, isLoading, activeRaceId }: TabPr
 
 
   if (!activeRace) {
-    return <Card><CardContent>Select a race to influence it.</CardContent></Card>
+    return <Card><CardContent className="p-6">Select a race to influence it.</CardContent></Card>
   }
 
   return (
@@ -109,7 +109,7 @@ export function InfluenceTab({ world, setWorld, isLoading, activeRaceId }: TabPr
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="font-headline flex items-center">
-                <Sparkles className="mr-2 text-primary" /> Creator's Toolkit
+                <Sparkles className="mr-2 text-primary" /> Creator's Store
               </CardTitle>
               <CardDescription>
                 Spend Race Points (RP) to bestow blessings upon the {activeRace.name}.
