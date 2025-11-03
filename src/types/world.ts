@@ -20,6 +20,14 @@ export interface Race {
   activeBoons: BoonId[];
   traits?: string;
   location?: string;
+  problems?: Problem[];
+}
+
+export interface Problem {
+    id: string;
+    title: string;
+    description: string;
+    severity: 'Low' | 'Medium' | 'High' | 'Critical' | 'Catastrophic';
 }
 
 export interface NamingProfile {

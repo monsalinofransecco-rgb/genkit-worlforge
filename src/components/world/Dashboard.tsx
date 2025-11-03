@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getWorldById, saveWorld } from '@/lib/world-store';
-import type { World } from '@/types/world';
+import type { World, Race, Problem } from '@/types/world';
 import { notFound } from 'next/navigation';
 import {
   Card,
@@ -13,8 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { OverviewTab } from './OverviewTab';
-import { History, Shield, Users, Skull, FileText, Swords, Sparkles, BookOpen, Hand, Landmark, Store, Gem } from 'lucide-react';
+import { History, Shield, Users, Skull, FileText, Swords, Sparkles, BookOpen, Hand, Landmark, Store, Gem, AlertTriangle } from 'lucide-react';
 import { GraveyardTab } from './GraveyardTab';
 import { CharactersTab } from './CharactersTab';
 import { RacesTab } from './RacesTab';
@@ -32,6 +31,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { InfluenceTab } from './InfluenceTab';
+import { OverviewTab } from './OverviewTab';
+import { HistoryTab } from './HistoryTab';
+import { ProblemsTab } from './ProblemsTab';
+
 
 function StatCard({ title, value, icon }: { title: string, value: string | number, icon: React.ReactNode }) {
     return (
@@ -72,7 +75,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
   };
   
   const handleTimeAdvance = async (years: 1 | 10) => {
-    if (!world) return;
+    if (!world || !activeRace) return;
     setIsLoading(true);
     const result = await runAdvanceTime({
       years,
@@ -81,8 +84,9 @@ export default function Dashboard({ worldId }: { worldId: string }) {
       raceCount: world.races.length,
       population: world.population,
       significantEvents: world.significantEvents.join('\n'),
-      boons: world.races.flatMap(r => r.activeBoons || []).join(', ') || 'None',
+      boons: activeRace.activeBoons.join(', ') || 'None',
       cataclysmPreparations: world.cataclysmPreparations,
+      problems: activeRace.problems || [],
     });
     setIsLoading(false);
 
@@ -100,17 +104,26 @@ export default function Dashboard({ worldId }: { worldId: string }) {
       const popChangeMatch = data.populationChanges.match(/by approximately ([\d,]+)/);
       const popChange = popChangeMatch ? parseInt(popChangeMatch[1].replace(/,/g, ''), 10) : years * 100;
       
-      let newPopulation = world.population;
+      let newPopulation = activeRace.population;
       if (data.populationChanges.includes('increased') || data.populationChanges.includes('grew')) {
         newPopulation += popChange;
       } else if (data.populationChanges.includes('decreased') || data.populationChanges.includes('declined')) {
         newPopulation -= popChange;
       }
+      
+      const updatedRaces = world.races.map(r => 
+        r.id === activeRaceId 
+        ? { ...r, population: Math.max(0, newPopulation), problems: data.updatedProblems || r.problems }
+        : r
+      );
+      
+      const totalPopulation = updatedRaces.reduce((sum, r) => sum + r.population, 0);
 
       updateWorld({
         ...world,
         currentYear: data.newYear,
-        population: Math.max(0, newPopulation),
+        races: updatedRaces,
+        population: totalPopulation,
         narrativeLog: [...world.narrativeLog, ...newEntries],
       });
       toast({
@@ -189,20 +202,14 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                         <TabsTrigger value="graveyard"><Skull className="mr-2 h-4 w-4" />Graveyard</TabsTrigger>
                     </TabsList>
                     <TabsContent value="overview" className="pt-6 space-y-6">
-                         <div className="grid md:grid-cols-3 gap-4">
-                            <StatCard title="Population" value={race.population.toLocaleString()} icon={<Users className="text-muted-foreground" />} />
-                            <StatCard title="General Status" value={race.traits ? 'Defined' : 'Nascent'} icon={<BookOpen className="text-muted-foreground" />} />
-                            <StatCard title="Race Points" value={race.racePoints} icon={<Gem className="text-muted-foreground" />} />
-                            <StatCard title="Politics" value="Tribal" icon={<Landmark className="text-muted-foreground" />} />
-                            <StatCard title="Culture" value="Nascent" icon={<Sparkles className="text-muted-foreground" />} />
-                            <StatCard title="Location" value={race.location || "Not Set"} icon={<Hand className="text-muted-foreground" />} />
-                        </div>
+                        <OverviewTab race={race} />
+                        <ProblemsTab problems={race.problems || []} />
                     </TabsContent>
                     <TabsContent value="characters">
                         <CharactersTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} activeRaceId={race.id} />
                     </TabsContent>
                      <TabsContent value="history">
-                        <OverviewTab world={world} />
+                        <HistoryTab world={world} />
                     </TabsContent>
                      <TabsContent value="culture">
                         <RacesTab world={world} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
@@ -255,5 +262,3 @@ function DashboardSkeleton() {
     </div>
   );
 }
-
-    

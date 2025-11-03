@@ -60,6 +60,7 @@ export function createPreliminaryWorld(name: string, raceCount: number): World {
         population: 1000,
         racePoints: 100,
         activeBoons: [],
+        problems: [],
       })),
       population: 0,
       significantEvents: [`The world of ${name} was forged.`],
@@ -93,6 +94,7 @@ export function createWorld(name: string, era: string, raceCount: number): World
             population: 1000,
             racePoints: 100,
             activeBoons: [],
+            problems: [],
         }
     }),
     population: 1000 * raceCount,
