@@ -140,15 +140,15 @@ SIMULATION DIRECTIVES FOR ADVANCING TIME BY {{years}} YEARS:
     *   **Critical Failure:** If a 'Critical' problem was ignored, you MUST generate a catastrophic outcome. The 'populationChange.died' number must be massive, and the 'summary' must be grim.
     *   **Generate New Problems (Max 3 Total):** Based on this era's events, new problems may emerge as a logical consequence. A population boom could cause "Resource Strain (Low)". A discovery could lead to "Unexpected Sickness (Medium)". Add any new problems to 'updatedProblems'.
     *   **Apply Boons:** You MUST incorporate the effects of these active boons: {{#if activeBoons}}{{#each activeBoons}}'{{this}}' {{/each}}{{else}}None{{/if}}.
-        - 'fertility': Increase `populationChange.born`.
+        - 'fertility': Increase populationChange.born.
         - 'strength': Favorable outcomes in conflicts or physical challenges.
         - 'wisdom': Narrate a technological or societal advancement (e.g., better tools, a new ritual).
         - 'resilience': Describe better recovery from hardships or problems.
     *   **Synthesize Events:** Create a bulleted list of 2-3 notable 'events' that occurred during this time.
 
 3.  **POPULATION SIMULATION:**
-    *   Calculate `born` and `died` based on the events, problems, and boons. The base death rate is ~2% of the population per year. The base birth rate is ~4%. Adjust these based on the narrative. A famine (`died` up), a fertility boon (`born` up).
-    *   Calculate `newPopulation`.
+    *   Calculate 'born' and 'died' based on the events, problems, and boons. The base death rate is ~2% of the population per year. The base birth rate is ~4%. Adjust these based on the narrative. A famine (died up), a fertility boon (born up).
+    *   Calculate 'newPopulation'.
 
 4.  **CHARACTER SIMULATION (THE "SOUL"):**
     *   **Character Log Entries (MANDATORY):** For **every single living notable character** provided in the input, you MUST generate a new personal log entry for them in the 'characterLogEntries' array. This is not optional.
@@ -162,7 +162,7 @@ SIMULATION DIRECTIVES FOR ADVANCING TIME BY {{years}} YEARS:
         - **'great_leader' Boon:** If 'strength' or 'wisdom' boon is active, you are encouraged to generate a new character.
         - **Output:** If a character emerges, fully populate the 'newCharacter' object.
             - Write the 'emergenceReason' explaining *why* they emerged (e.g., "As the tribe starved, a young hunter named Olen refused to give up...").
-            - **First Log Entry (CRITICAL):** The `firstLogEntry` MUST NOT be a generic placeholder. It MUST be the character's *first emotional thought*, directly tied to their `emergenceReason`.
+            - **First Log Entry (CRITICAL):** The 'firstLogEntry' MUST NOT be a generic placeholder. It MUST be the character's *first emotional thought*, directly tied to their 'emergenceReason'.
             - *(Example: (Reason: "Survived a plague") -> firstLogEntry: "The sickness took my family, but I survived. I will not be helpless. I will learn the secrets of the plants.")*
 
 Your final output MUST be a single JSON object matching the defined output schema.
