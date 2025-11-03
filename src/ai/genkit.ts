@@ -1,6 +1,5 @@
 import {genkit, configureGenkit} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
-import {dotPrompt} from '@genkit-ai/dotprompt';
 import Handlebars from 'handlebars';
 
 // For 'unless (eq ...)'
@@ -35,15 +34,6 @@ Handlebars.registerHelper('isGuidanceProvided', isGuidanceProvided);
 export const ai = genkit({
   plugins: [
     googleAI(),
-    dotPrompt({
-      helpers: {
-        eq: eqHelper,
-        ne: neHelper,
-        notequal: notequalHelper,
-        join: joinHelper,
-        isGuidanceProvided: isGuidanceProvided,
-      },
-    }),
   ],
   model: 'googleai/gemini-2.5-pro',
 });
