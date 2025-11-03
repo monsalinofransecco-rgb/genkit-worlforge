@@ -30,11 +30,12 @@ import { runGenerateRaceNamingProfile } from '@/app/actions';
 import type { World, Race } from '@/types/world';
 import { Loader2, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { createPreliminaryWorld } from '@/lib/world-store';
 
 const raceSchema = z.object({
   name: z.string().min(3, 'Race name must be at least 3 characters.'),
-  traits: z.string().min(10, 'Describe some key traits.'),
+  description: z.string().min(10, 'Describe the race.'),
+  racialTraits: z.string().min(3, 'List at least one common trait.'),
+  specialTraits: z.string().optional(),
   location: z.string().min(5, 'Describe their starting location.'),
   population: z.number().int().min(100).max(5000).default(1000),
 });
@@ -80,15 +81,12 @@ export default function PopulateRacesPage({
     if (loadedWorld) {
       setWorld(loadedWorld);
       
-      // Determine race count from what was stored.
-      // This is a bit of a hack because we don't store raceCount on the preliminary world.
-      // We stored empty races before, but now we don't.
-      const worldRaceCount = loadedWorld.races.length > 0 ? loadedWorld.races.length : Math.max(1, (Object.keys(loadedWorld).includes('raceCount') ? (loadedWorld as any).raceCount : 0));
+      const worldRaceCount = loadedWorld.races.length > 0 ? loadedWorld.races.length : 0;
       
       const currentRaces = form.getValues('races');
       if (fields.length === 0 && worldRaceCount > 0) {
         for (let i = 0; i < worldRaceCount; i++) {
-          append({ name: '', traits: '', location: '', population: 1000 });
+          append({ name: '', description: '', racialTraits: '', specialTraits: '', location: '', population: 1000 });
         }
       }
        setRaceCount(worldRaceCount);
@@ -120,7 +118,7 @@ export default function PopulateRacesPage({
         finalRaces.push({
           id: crypto.randomUUID(),
           name: raceData.name,
-          traits: raceData.traits,
+          traits: `${raceData.description} Common traits: ${raceData.racialTraits}. Special traits: ${raceData.specialTraits || 'None'}.`,
           location: raceData.location,
           population: population,
           racePoints: 100,
@@ -169,8 +167,6 @@ export default function PopulateRacesPage({
   }
 
   if (!world || raceCount === 0) {
-    // If there's no world or we couldn't determine the race count, show loading or not found.
-    // The latter can happen if the preliminary world wasn't created correctly.
     if (isMounted && !world) return notFound();
     return (
       <div className="flex flex-col min-h-screen bg-zinc-950">
@@ -231,21 +227,55 @@ export default function PopulateRacesPage({
                         />
                         <FormField
                           control={form.control}
-                          name={`races.${index}.traits`}
+                          name={`races.${index}.description`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Description & Traits</FormLabel>
+                              <FormLabel>Description</FormLabel>
                               <FormControl>
                                 <Textarea
                                   placeholder="Describe their culture, appearance, and core philosophies. Are they stoic builders, nomadic mystics, or fierce warriors?"
                                   {...field}
-                                  rows={4}
+                                  rows={3}
                                 />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                            control={form.control}
+                            name={`races.${index}.racialTraits`}
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Racial Traits</FormLabel>
+                                <FormControl>
+                                    <Input
+                                    placeholder="e.g., Hardy, Industrious, Stubborn"
+                                    {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                             <FormField
+                            control={form.control}
+                            name={`races.${index}.specialTraits`}
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Special Traits (Optional)</FormLabel>
+                                <FormControl>
+                                    <Input
+                                    placeholder="e.g., Fire Resistance, Night Vision"
+                                    {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            <FormField
                             control={form.control}
