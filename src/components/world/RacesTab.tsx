@@ -13,17 +13,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import type { World, Race, NotableCharacter } from '@/types/world';
+import type { World } from '@/types/world';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import {
   runGenerateRaceNamingProfile,
-  runSimulateNotableCharacterDeaths,
 } from '@/app/actions';
-import { Loader2, Users, Wand2, UserPlus, Skull, Quote } from 'lucide-react';
-import { Badge } from '../ui/badge';
+import { Loader2, Users, Wand2 } from 'lucide-react';
 
 type TabProps = {
   world: World;
@@ -33,10 +29,7 @@ type TabProps = {
 };
 
 export function RacesTab({ world, setWorld, isLoading, setIsLoading }: TabProps) {
-  const [newCharacterName, setNewCharacterName] = useState('');
-  const [selectedRaceForChar, setSelectedRaceForChar] = useState<string | null>(
-    world.races[0]?.id || null
-  );
+
   const { toast } = useToast();
 
   const handleGenerateNamingProfile = async (raceId: string) => {
@@ -62,88 +55,23 @@ export function RacesTab({ world, setWorld, isLoading, setIsLoading }: TabProps)
     }
   };
 
-  const handleAddCharacter = (raceId: string) => {
-    if (!newCharacterName.trim()) return;
-
-    const newCharacter: NotableCharacter = {
-      id: crypto.randomUUID(),
-      name: newCharacterName,
-      raceId: raceId,
-      status: 'alive',
-    };
-
-    setWorld({
-      ...world,
-      notableCharacters: [...world.notableCharacters, newCharacter],
-    });
-    setNewCharacterName('');
-    toast({ title: 'Notable Character Added', description: `${newCharacter.name} has joined the world.` });
-  };
-  
-  const handleSimulateDeaths = async (raceId: string) => {
-    const race = world.races.find(r => r.id === raceId);
-    const characters = world.notableCharacters.filter(c => c.raceId === raceId && c.status === 'alive');
-    if (!race || characters.length === 0) {
-      toast({ variant: 'destructive', title: 'No living notable characters for this race.'});
-      return;
-    }
-
-    setIsLoading(true);
-    const result = await runSimulateNotableCharacterDeaths({
-      notableCharacterNames: characters.map(c => c.name),
-      reasonForDeaths: 'Old age and natural causes',
-      currentYear: world.currentYear,
-      raceName: race.name,
-    });
-    setIsLoading(false);
-
-    if (result.success && result.data) {
-      const { deathNarratives, commonerDeathToll, impactfulQuote } = result.data;
-      
-      const updatedCharacters = world.notableCharacters.map(c => {
-        if (characters.find(char => char.id === c.id)) {
-          const narrative = deathNarratives.find(n => n.includes(c.name)) || "Died of old age.";
-          return { ...c, status: 'dead', deathYear: world.currentYear, deathNarrative: narrative };
-        }
-        return c;
-      });
-
-      const newLogEntries = [
-        ...deathNarratives.map(n => ({ year: world.currentYear, type: 'death' as const, content: n})),
-        { year: world.currentYear, type: 'death' as const, content: `${commonerDeathToll.toLocaleString()} commoners also perished.`},
-        { year: world.currentYear, type: 'death' as const, content: `A reflection on the loss: "${impactfulQuote}"`},
-      ];
-
-      setWorld({
-        ...world,
-        notableCharacters: updatedCharacters,
-        narrativeLog: [...world.narrativeLog, ...newLogEntries],
-      });
-
-      toast({ title: "Characters' Fates Sealed", description: "The annals of history have been updated."});
-    } else {
-       toast({ variant: 'destructive', title: 'Error Simulating Deaths', description: result.error });
-    }
-  };
-
-
   return (
     <Card>
       <CardHeader>
         <CardTitle className="font-headline flex items-center">
-          <Users className="mr-2" /> Races & Characters
+          <Users className="mr-2" /> Race Culture
         </CardTitle>
         <CardDescription>
-          Manage the races of your world and their notable figures.
+          Explore the unique cultural and linguistic details of each race.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="w-full" defaultValue={world.races[0]?.id}>
           {world.races.map((race) => (
             <AccordionItem key={race.id} value={race.id}>
               <AccordionTrigger className='font-headline'>{race.name}</AccordionTrigger>
               <AccordionContent className="space-y-6 p-2">
-                
+                <p className='text-sm text-muted-foreground'>{race.traits}</p>
                 <Card>
                     <CardHeader>
                         <CardTitle className='text-lg flex items-center gap-2'><Wand2 size={20}/> Naming Profile</CardTitle>
@@ -162,35 +90,6 @@ export function RacesTab({ world, setWorld, isLoading, setIsLoading }: TabProps)
                             Generate Profile
                         </Button>
                         )}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className='text-lg flex items-center gap-2'><Users size={20} /> Notable Characters</CardTitle>
-                        <CardDescription>Individuals who shape this race's history.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                        {world.notableCharacters.filter(c => c.raceId === race.id).length > 0 ? (
-                           <ul className='space-y-2'>
-                            {world.notableCharacters.filter(c => c.raceId === race.id).map(c => (
-                                <li key={c.id} className='flex justify-between items-center text-sm'>
-                                    <span>{c.name}</span>
-                                    <Badge variant={c.status === 'alive' ? 'secondary' : 'destructive'}>{c.status}{c.status === 'dead' && ` (Y. ${c.deathYear})`}</Badge>
-                                </li>
-                            ))}
-                           </ul>
-                        ) : <p className='text-sm text-muted-foreground'>No notable characters yet.</p>}
-                        
-                        <div className="flex gap-2">
-                            <Input placeholder="New character name..." value={newCharacterName} onChange={e => setNewCharacterName(e.target.value)} />
-                            <Button onClick={() => handleAddCharacter(race.id)} size="sm" variant="outline"><UserPlus size={16} className='mr-2'/> Add</Button>
-                        </div>
-                        <Button onClick={() => handleSimulateDeaths(race.id)} disabled={isLoading} size="sm" variant="destructive" className="w-full">
-                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Skull size={16} className='mr-2'/>} Simulate Deaths
-                        </Button>
-                        </div>
                     </CardContent>
                 </Card>
 

@@ -14,21 +14,22 @@ import { runAdvanceTime } from '@/app/actions';
 import {
   Calendar,
   Users,
-  Clock,
   BookText,
   Loader2,
   CalendarPlus,
   CalendarClock,
 } from 'lucide-react';
+import { ScrollArea } from '../ui/scroll-area';
 
 type TabProps = {
   world: World;
   setWorld: (world: World) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  showStats?: boolean;
 };
 
-export function OverviewTab({ world, setWorld, isLoading, setIsLoading }: TabProps) {
+export function OverviewTab({ world, setWorld, isLoading, setIsLoading, showStats = true }: TabProps) {
   const { toast } = useToast();
 
   const handleTimeAdvance = async (years: 1 | 10) => {
@@ -40,7 +41,7 @@ export function OverviewTab({ world, setWorld, isLoading, setIsLoading }: TabPro
       raceCount: world.races.length,
       population: world.population,
       significantEvents: world.significantEvents.join('\n'),
-      boons: world.races.flatMap(r => r.activeBoons).join(', ') || 'None',
+      boons: world.races.flatMap(r => r.activeBoons || []).join(', ') || 'None',
       cataclysmPreparations: world.cataclysmPreparations,
     });
     setIsLoading(false);
@@ -54,12 +55,18 @@ export function OverviewTab({ world, setWorld, isLoading, setIsLoading }: TabPro
         { year: data.newYear, type: 'problem', content: data.problemSimulations },
         { year: data.newYear, type: 'society', content: data.societalEvolutions },
         { year: data.newYear, type: 'discovery', content: data.geographicalDiscoveries },
-      ];
+      ].filter(entry => entry.content && entry.content.trim() !== '' && !entry.content.toLowerCase().includes('n/a'));
 
       // A simple heuristic to update population
       const popChangeMatch = data.populationChanges.match(/by approximately ([\d,]+)/);
       const popChange = popChangeMatch ? parseInt(popChangeMatch[1].replace(/,/g, ''), 10) : years * 100;
-      const newPopulation = data.populationChanges.includes('decreased') ? world.population - popChange : world.population + popChange;
+      
+      let newPopulation = world.population;
+      if (data.populationChanges.includes('increased') || data.populationChanges.includes('grew')) {
+        newPopulation += popChange;
+      } else if (data.populationChanges.includes('decreased') || data.populationChanges.includes('declined')) {
+        newPopulation -= popChange;
+      }
 
       setWorld({
         ...world,
@@ -83,48 +90,52 @@ export function OverviewTab({ world, setWorld, isLoading, setIsLoading }: TabPro
   return (
     <div className="grid gap-6 md:grid-cols-3">
       <div className="md:col-span-1 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline">World Stats</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center text-muted-foreground">
-                <Calendar className="mr-2 h-4 w-4" /> Current Year
-              </span>
-              <span className="font-semibold">{world.currentYear}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center text-muted-foreground">
-                <Users className="mr-2 h-4 w-4" /> Total Population
-              </span>
-              <span className="font-semibold">{world.population.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center text-muted-foreground">
-                <Users className="mr-2 h-4 w-4" /> Races
-              </span>
-              <span className="font-semibold">{world.races.length}</span>
-            </div>
-          </CardContent>
-        </Card>
+        {showStats && (
+        <>
+            <Card>
+            <CardHeader>
+                <CardTitle className="font-headline">World Stats</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm">
+                <div className="flex items-center justify-between">
+                <span className="flex items-center text-muted-foreground">
+                    <Calendar className="mr-2 h-4 w-4" /> Current Year
+                </span>
+                <span className="font-semibold">{world.currentYear}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                <span className="flex items-center text-muted-foreground">
+                    <Users className="mr-2 h-4 w-4" /> Total Population
+                </span>
+                <span className="font-semibold">{world.population.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                <span className="flex items-center text-muted-foreground">
+                    <Users className="mr-2 h-4 w-4" /> Races
+                </span>
+                <span className="font-semibold">{world.races.length}</span>
+                </div>
+            </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline">Advance Time</CardTitle>
-            <CardDescription>Simulate the passage of time.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col sm:flex-row gap-2">
-            <Button onClick={() => handleTimeAdvance(1)} disabled={isLoading} className="w-full">
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CalendarPlus className="mr-2 h-4 w-4" />} 1 Year
-            </Button>
-            <Button onClick={() => handleTimeAdvance(10)} disabled={isLoading} className="w-full">
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CalendarClock className="mr-2 h-4 w-4" />} 10 Years
-            </Button>
-          </CardContent>
-        </Card>
+            <Card>
+            <CardHeader>
+                <CardTitle className="font-headline">Advance Time</CardTitle>
+                <CardDescription>Simulate the passage of time.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row gap-2">
+                <Button onClick={() => handleTimeAdvance(1)} disabled={isLoading} className="w-full">
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CalendarPlus className="mr-2 h-4 w-4" />} 1 Year
+                </Button>
+                <Button onClick={() => handleTimeAdvance(10)} disabled={isLoading} className="w-full">
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CalendarClock className="mr-2 h-4 w-4" />} 10 Years
+                </Button>
+            </CardContent>
+            </Card>
+        </>
+        )}
       </div>
-      <div className="md:col-span-2">
+      <div className={showStats ? "md:col-span-2" : "md:col-span-3"}>
         <Card className="h-full">
           <CardHeader>
             <CardTitle className="font-headline flex items-center">
@@ -133,19 +144,21 @@ export function OverviewTab({ world, setWorld, isLoading, setIsLoading }: TabPro
             <CardDescription>The unfolding history of your world.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="max-h-[600px] overflow-y-auto pr-4 space-y-6">
-              {[...world.narrativeLog].reverse().map((entry, index) => (
-                <div key={index} className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="font-bold text-primary">{entry.year}</div>
-                    <div className="flex-grow w-px bg-border my-1"></div>
+            <ScrollArea className="h-[600px] pr-4">
+              <div className="space-y-6">
+                {[...world.narrativeLog].reverse().map((entry, index) => (
+                  <div key={index} className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="font-bold text-primary">{entry.year}</div>
+                      <div className="flex-grow w-px bg-border my-1"></div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">{entry.content}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{entry.content}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </ScrollArea>
           </CardContent>
         </Card>
       </div>

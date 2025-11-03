@@ -15,26 +15,17 @@ import { useToast } from '@/hooks/use-toast';
 import { BookUp, Sparkles, Gem } from 'lucide-react';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { creatorStoreBoons } from '@/lib/boons';
 
 type TabProps = {
   world: World;
   setWorld: (world: World) => void;
   isLoading: boolean;
+  activeRaceId: string;
 };
 
-export function InfluenceTab({ world, setWorld, isLoading }: TabProps) {
+export function InfluenceTab({ world, setWorld, isLoading, activeRaceId }: TabProps) {
   const [chronicleEntry, setChronicleEntry] = useState('');
-  const [activeRaceId, setActiveRaceId] = useState<string>(
-    world.races[0]?.id || ''
-  );
   const { toast } = useToast();
 
   const activeRace = world.races.find((r) => r.id === activeRaceId);
@@ -65,7 +56,7 @@ export function InfluenceTab({ world, setWorld, isLoading }: TabProps) {
     const raceToUpdate = world.races.find(r => r.id === activeRaceId);
     if (!raceToUpdate) return;
 
-    let newRaces = [...world.races];
+    let newRaces = world.races.map(r => ({...r, activeBoons: r.activeBoons || []}));
     const raceIndex = newRaces.findIndex(r => r.id === activeRaceId);
 
     if (isActive) { // Activating
@@ -73,7 +64,7 @@ export function InfluenceTab({ world, setWorld, isLoading }: TabProps) {
         const updatedRace = {
             ...raceToUpdate,
             racePoints: raceToUpdate.racePoints - boon.cost,
-            activeBoons: [...raceToUpdate.activeBoons, boon.id],
+            activeBoons: [...(raceToUpdate.activeBoons || []), boon.id],
         };
         newRaces[raceIndex] = updatedRace;
         
@@ -93,7 +84,7 @@ export function InfluenceTab({ world, setWorld, isLoading }: TabProps) {
         const updatedRace = {
             ...raceToUpdate,
             racePoints: raceToUpdate.racePoints + boon.cost,
-            activeBoons: raceToUpdate.activeBoons.filter(id => id !== boonId),
+            activeBoons: (raceToUpdate.activeBoons || []).filter(id => id !== boonId),
         };
         newRaces[raceIndex] = updatedRace;
 
@@ -107,8 +98,64 @@ export function InfluenceTab({ world, setWorld, isLoading }: TabProps) {
   };
 
 
+  if (!activeRace) {
+    return <Card><CardContent>Select a race to influence it.</CardContent></Card>
+  }
+
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="grid gap-6">
+       <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="font-headline flex items-center">
+                <Sparkles className="mr-2 text-primary" /> Creator's Toolkit
+              </CardTitle>
+              <CardDescription>
+                Spend Race Points (RP) to bestow blessings upon the {activeRace.name}.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2 font-bold text-lg text-primary bg-primary/10 px-3 py-1.5 rounded-md">
+              <Gem className="h-5 w-5" />
+              <span>{activeRace.racePoints} RP</span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-4 pt-4">
+            {creatorStoreBoons.map((boon) => {
+              const isAcquired = (activeRace.activeBoons || []).includes(boon.id);
+              const canAfford = activeRace.racePoints >= boon.cost;
+
+              return (
+                <div
+                  key={boon.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                >
+                  <div className="flex items-center gap-4">
+                    {boon.icon}
+                    <div>
+                      <Label
+                        htmlFor={`boon-${boon.id}-${activeRace.id}`}
+                        className="font-semibold"
+                      >
+                        {boon.name}
+                      </Label>
+                       <p className="text-xs text-muted-foreground">{boon.description} (Cost: {boon.cost} RP)</p>
+                    </div>
+                  </div>
+                  <Switch
+                    id={`boon-${boon.id}-${activeRace.id}`}
+                    checked={isAcquired}
+                    onCheckedChange={(isActive) => onBoonToggle(boon.id, isActive)}
+                    disabled={isLoading || (!isAcquired && !canAfford)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle className="font-headline flex items-center">
@@ -129,78 +176,6 @@ export function InfluenceTab({ world, setWorld, isLoading }: TabProps) {
           <Button onClick={handleAddChronicle} className="w-full">
             Add to Chronicle
           </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="font-headline flex items-center">
-                <Sparkles className="mr-2 text-primary" /> Creator's Toolkit
-              </CardTitle>
-              <CardDescription>
-                Spend Race Points (RP) to bestow blessings upon a race.
-              </CardDescription>
-            </div>
-             {activeRace && (
-              <div className="flex items-center gap-2 font-bold text-lg text-primary bg-primary/10 px-3 py-1.5 rounded-md">
-                <Gem className="h-5 w-5" />
-                <span>{activeRace.racePoints} RP</span>
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className='space-y-2'>
-            <Label>Select Race</Label>
-            <Select value={activeRaceId} onValueChange={setActiveRaceId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a race to influence..." />
-              </SelectTrigger>
-              <SelectContent>
-                {world.races.map((race) => (
-                  <SelectItem key={race.id} value={race.id}>
-                    {race.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-4 pt-4">
-            {creatorStoreBoons.map((boon) => {
-              if (!activeRace) return null;
-              const isAcquired = (activeRace.activeBoons || []).includes(boon.id);
-              const canAfford = activeRace.racePoints >= boon.cost;
-
-              return (
-                <div
-                  key={boon.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                >
-                  <div className="flex items-center gap-4">
-                    {boon.icon}
-                    <div>
-                      <Label
-                        htmlFor={`boon-${boon.id}`}
-                        className="font-semibold"
-                      >
-                        {boon.name}
-                      </Label>
-                       <p className="text-xs text-muted-foreground">{boon.description} (Cost: {boon.cost} RP)</p>
-                    </div>
-                  </div>
-                  <Switch
-                    id={`boon-${boon.id}`}
-                    checked={isAcquired}
-                    onCheckedChange={(isActive) => onBoonToggle(boon.id, isActive)}
-                    disabled={isLoading || (!isAcquired && !canAfford)}
-                  />
-                </div>
-              );
-            })}
-          </div>
         </CardContent>
       </Card>
     </div>
