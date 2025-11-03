@@ -49,7 +49,7 @@ export function createWorld(name: string, era: string, raceCount: number): World
       name: `Unnamed Race ${i + 1}`,
       population: 1000,
       racePoints: 100, // Starting RP
-      activeBoons: [],
+      activeBoons: [], // Initialize activeBoons
     })),
     population: 1000 * raceCount,
     significantEvents: [`The world of ${name} was forged in the ${era}.`],

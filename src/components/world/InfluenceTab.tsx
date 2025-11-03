@@ -62,7 +62,7 @@ export function InfluenceTab({ world, setWorld, isLoading }: TabProps) {
     const boon = creatorStoreBoons.find(b => b.id === boonId);
     if (!boon) return;
     
-    const newRaces = world.races.map(r => ({ ...r, activeBoons: [...r.activeBoons] })); // Deep-ish copy
+    const newRaces = world.races.map(r => ({ ...r, activeBoons: [...(r.activeBoons || [])] }));
     const race = newRaces.find(r => r.id === activeRaceId);
     if (!race) return;
 
@@ -159,7 +159,7 @@ export function InfluenceTab({ world, setWorld, isLoading }: TabProps) {
           <div className="space-y-4 pt-4">
             {creatorStoreBoons.map((boon) => {
               if (!activeRace) return null;
-              const isAcquired = activeRace.activeBoons.includes(boon.id);
+              const isAcquired = (activeRace.activeBoons || []).includes(boon.id);
               const canAfford = activeRace.racePoints >= boon.cost;
 
               return (

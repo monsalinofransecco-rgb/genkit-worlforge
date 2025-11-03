@@ -40,7 +40,7 @@ export function OverviewTab({ world, setWorld, isLoading, setIsLoading }: TabPro
       raceCount: world.races.length,
       population: world.population,
       significantEvents: world.significantEvents.join('\n'),
-      boons: world.boons.join(', ') || 'None',
+      boons: world.races.flatMap(r => r.activeBoons).join(', ') || 'None',
       cataclysmPreparations: world.cataclysmPreparations,
     });
     setIsLoading(false);
