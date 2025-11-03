@@ -119,10 +119,12 @@ export interface NarrativeEntry {
   content: string;
 }
 
+export type WorldEra = 'Primal Era' | 'Tribal Era' | 'Classical Era';
+
 export interface World {
   id: string;
   name: string;
-  era: string;
+  era: WorldEra;
   currentYear: number;
   races: Race[];
   population: number;

@@ -22,6 +22,7 @@ export function getWorlds(): World[] {
   return worlds.map(world => {
     return {
       ...world,
+      era: world.era || 'Primal Era',
       races: world.races.map(race => {
         const history: HistoryEntry[] = race.history || [];
         const notableCharacters: NotableCharacter[] = (race.notableCharacters || (world as any).notableCharacters || []).map((c: any) => ({
