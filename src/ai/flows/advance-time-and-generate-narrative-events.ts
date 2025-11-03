@@ -96,9 +96,6 @@ export async function advanceTimeAndGenerateNarrativeEvents(input: AdvanceTimeAn
   return advanceTimeAndGenerateNarrativeEventsFlow(input);
 }
 
-const isGuidanceProvided = (chronicleEntry?: string) => {
-    return chronicleEntry && chronicleEntry.trim() !== '' && !chronicleEntry.includes("The world of")
-}
 
 const prompt = ai.definePrompt({
   name: 'advanceTimeAndGenerateNarrativeEventsPrompt',
@@ -173,8 +170,13 @@ Your final output MUST be a single JSON object matching the defined output schem
       topP: 1,
       maxOutputTokens: 8192,
   },
-  // @ts-ignore
-  helpers: { isGuidanceProvided },
+  template: {
+    helpers: {
+      isGuidanceProvided: (chronicleEntry?: string) => {
+        return chronicleEntry && chronicleEntry.trim() !== '' && !chronicleEntry.includes("The world of")
+      }
+    }
+  }
 });
 
 const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
@@ -214,5 +216,3 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
-
-    
