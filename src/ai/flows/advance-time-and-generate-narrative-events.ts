@@ -164,13 +164,6 @@ SIMULATION DIRECTIVES FOR ADVANCING TIME BY {{years}} YEARS:
 
 Your final output MUST be a single JSON object matching the defined output schema.
 `,
-  template: {
-    helpers: {
-      isGuidanceProvided: (chronicleEntry?: string) => {
-        return Boolean(chronicleEntry && chronicleEntry.trim() !== '' && !chronicleEntry.includes("The world of"));
-      }
-    }
-  },
   config: {
       temperature: 1,
       topK: 32,
