@@ -96,7 +96,6 @@ export async function advanceTimeAndGenerateNarrativeEvents(input: AdvanceTimeAn
   return advanceTimeAndGenerateNarrativeEventsFlow(input);
 }
 
-
 const prompt = ai.definePrompt({
   name: 'advanceTimeAndGenerateNarrativeEventsPrompt',
   input: {schema: AdvanceTimeAndGenerateNarrativeEventsInputSchema},
