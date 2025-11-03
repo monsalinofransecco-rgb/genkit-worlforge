@@ -167,12 +167,12 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     *   Apply Boon effects: 'fertility' (more born), 'strength' (better conflict outcomes), 'wisdom' (advancement), 'resilience' (better recovery).
 
 3.  **DEATH SIMULATION (THE "SOUL"):**
-    *   **Notable Deaths:** Review the `livingCharacters`. Determine if any should die from old age, sickness, or events. If so, you MUST generate a `fallenNotableCharacters` entry for them. You MUST write their detailed, emotional `deathDetails` (reason, favoriteThing, happiestMemory, lastThought).
-    *   **Commoner Deaths:** Look at your `populationChange.died` statistic. To make this number feel real, you MUST "promote" **2-3** of these anonymous deaths into named entries for the `namedCommonerDeaths` array. **Do not exceed 3.**
-        *   For each, invent a new, culturally-appropriate `name`.
-        *   Give them a simple `title` (e.g., 'a young hunter,' 'an old farmer,' 'a brave mother').
-        *   The `deathDetails.reason` for these commoners MUST be tied to the era's `summary` or `events`.
-        *   You MUST write their full, emotionally-tugging `deathDetails`.
+    *   **Notable Deaths:** Review the \`livingCharacters\`. Determine if any should die from old age, sickness, or events. If so, you MUST generate a \`fallenNotableCharacters\` entry for them. You MUST write their detailed, emotional \`deathDetails\` (reason, favoriteThing, happiestMemory, lastThought).
+    *   **Commoner Deaths:** Look at your \`populationChange.died\` statistic. To make this number feel real, you MUST "promote" **2-3** of these anonymous deaths into named entries for the \`namedCommonerDeaths\` array. **Do not exceed 3.**
+        *   For each, invent a new, culturally-appropriate \`name\`.
+        *   Give them a simple \`title\` (e.g., 'a young hunter,' 'an old farmer,' 'a brave mother').
+        *   The \`deathDetails.reason\` for these commoners MUST be tied to the era's \`summary\` or \`events\`.
+        *   You MUST write their full, emotionally-tugging \`deathDetails\`.
 
 4.  **POPULATION & CHARACTER SIMULATION:**
     *   Calculate 'born' and 'died' based on events. Base death rate is ~2% of population per year, base birth rate is ~4%. Adjust based on narrative.
@@ -182,11 +182,11 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
         *   **Max 4 Rule:** If a race has 4 living characters, FORBIDDEN from generating a new one.
         *   **Last Spark Rule:** If a race has 0 living characters, you MUST generate 1 new character.
         *   Base emergence on narrative triggers (hardship, talent, boons).
-        *   If a character emerges, populate `newCharacter`. The `firstLogEntry` MUST be an emotional thought tied to their `emergenceReason`.
+        *   If a character emerges, populate \`newCharacter\`. The \`firstLogEntry\` MUST be an emotional thought tied to their \`emergenceReason\`.
 
 5.  **FINAL SUMMARY:**
-    *   When you write the main `summary`, you MUST include the total `died` statistic (e.g., "...claimed 31 lives...").
-    *   You MUST also mention by name **one or two** of the most significant deaths you just generated (from `fallenNotableCharacters` or `namedCommonerDeaths`).
+    *   When you write the main \`summary\`, you MUST include the total \`died\` statistic (e.g., "...claimed 31 lives...").
+    *   You MUST also mention by name **one or two** of the most significant deaths you just generated (from \`fallenNotableCharacters\` or \`namedCommonerDeaths\`).
 
 Your final output MUST be a single JSON object matching the defined output schema, containing a 'newYear' and an array of 'raceResults'.
 `,
