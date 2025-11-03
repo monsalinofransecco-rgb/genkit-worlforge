@@ -62,17 +62,24 @@ export function InfluenceTab({ world, setWorld, isLoading }: TabProps) {
     const boon = creatorStoreBoons.find(b => b.id === boonId);
     if (!boon) return;
     
-    const newRaces = world.races.map(r => ({ ...r, activeBoons: [...(r.activeBoons || [])] }));
-    const race = newRaces.find(r => r.id === activeRaceId);
-    if (!race) return;
+    const raceToUpdate = world.races.find(r => r.id === activeRaceId);
+    if (!raceToUpdate) return;
+
+    let newRaces = [...world.races];
+    const raceIndex = newRaces.findIndex(r => r.id === activeRaceId);
 
     if (isActive) { // Activating
-      if (race.racePoints >= boon.cost) {
-        race.racePoints -= boon.cost;
-        race.activeBoons.push(boon.id);
+      if (raceToUpdate.racePoints >= boon.cost) {
+        const updatedRace = {
+            ...raceToUpdate,
+            racePoints: raceToUpdate.racePoints - boon.cost,
+            activeBoons: [...raceToUpdate.activeBoons, boon.id],
+        };
+        newRaces[raceIndex] = updatedRace;
+        
         toast({
           title: 'Boon Activated!',
-          description: `${boon.name} is now active for the ${race.name}.`,
+          description: `${boon.name} is now active for the ${raceToUpdate.name}.`,
         });
       } else {
         toast({
@@ -83,12 +90,17 @@ export function InfluenceTab({ world, setWorld, isLoading }: TabProps) {
         return; // Abort state change
       }
     } else { // Deactivating
-      race.racePoints += boon.cost;
-      race.activeBoons = race.activeBoons.filter(id => id !== boonId);
-      toast({
-        title: 'Boon Deactivated',
-        description: `${boon.name} is no longer active. ${boon.cost} RP refunded.`,
-      });
+        const updatedRace = {
+            ...raceToUpdate,
+            racePoints: raceToUpdate.racePoints + boon.cost,
+            activeBoons: raceToUpdate.activeBoons.filter(id => id !== boonId),
+        };
+        newRaces[raceIndex] = updatedRace;
+
+        toast({
+            title: 'Boon Deactivated',
+            description: `${boon.name} is no longer active. ${boon.cost} RP refunded.`,
+        });
     }
 
     setWorld({ ...world, races: newRaces });

@@ -18,7 +18,7 @@ const AdvanceTimeAndGenerateNarrativeEventsInputSchema = z.object({
   raceCount: z.number().describe('The current number of races in the world.'),
   population: z.number().describe('The current population in the world.'),
   significantEvents: z.string().describe('A summary of significant events that have occurred in the world.'),
-  boons: z.string().describe('A summary of active boons affecting the world.'),
+  boons: z.string().describe('A comma-separated list of active boons affecting the world (e.g., "fertility,strength").'),
   cataclysmPreparations: z.string().describe('A summary of preparations for potential cataclysm events.'),
 });
 export type AdvanceTimeAndGenerateNarrativeEventsInput = z.infer<typeof AdvanceTimeAndGenerateNarrativeEventsInputSchema>;
@@ -56,6 +56,13 @@ Active boons affecting the world:
 
 Preparations for potential cataclysm events:
 {{{cataclysmPreparations}}}
+
+**MANDATORY BOON & CHRONICLE INTEGRATION**
+You MUST analyze the active boons and apply their effects.
+- If 'fertility' is in the boons list, you MUST apply a positive bias to population growth and narrate this as "a healthy, fertile period".
+- If 'strength' is in the boons list, you MUST ensure the race has favorable outcomes in any conflicts or physical challenges described.
+- If 'wisdom' is in the boons list, you MUST generate a technological or societal advancement.
+- If 'resilience' is in the boons list, you MUST describe how the race is better prepared for or recovers more quickly from any problems or hardships.
 
 Advance time by {{{years}}} years and generate narrative events, population changes, character lifecycle updates, problem simulations, societal evolution, and geographical discoveries that occurred during the time period.
 
