@@ -6,7 +6,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 import type { BoonId } from '@/types/world';
 
 // Schemas for Character data structures
@@ -67,6 +67,16 @@ const NamedCommonerDeathSchema = z.object({
     deathDetails: DeathDetailsSchema.describe("The detailed, emotional epitaph for the commoner.")
 });
 
+const CultureSchema = z.object({
+    name: z.string().describe("The new name for the culture (e.g., 'Militaristic', 'Hoarding')."),
+    description: z.string().describe("A description of the new culture, reflecting the events that caused it.")
+});
+
+const CultureLogEntrySchema = z.object({
+    eventName: z.string().describe("The name of the event that triggered the cultural shift (e.g., 'The Decade of Scarcity')."),
+    summary: z.string().describe("A summary of what happened and why it changed the culture.")
+});
+
 
 // Schemas for the main flow
 const ProblemSchema = z.object({
@@ -82,6 +92,7 @@ const RaceSimulationInputSchema = z.object({
     population: z.number(),
     traits: z.string().describe("Comma-separated list of the race's core traits, e.g., 'Hardy, Industrious'"),
     location: z.string().describe("The race's primary location, e.g., 'Crystal Mountains'"),
+    culture: CultureSchema,
     livingCharacters: z.array(LivingCharacterSchema).describe("A list of all currently living notable characters for this race."),
     problems: z.array(ProblemSchema).optional().describe('A list of current problems the race is facing.'),
     activeBoons: z.array(z.string()).describe("An array of active boon IDs, e.g., ['fertility', 'strength']."),
@@ -111,7 +122,9 @@ const RaceSimulationResultSchema = z.object({
     newCharacter: NewCharacterSchema.optional().describe("The full data for a new notable character, if one emerged this era for this race."),
     characterLogEntries: z.array(CharacterLogEntrySchema).describe("An array of new personal log entries, one for EACH living character for this race passed in the input."),
     fallenNotableCharacters: z.array(FallenNotableCharacterSchema).optional().describe("A list of existing notable characters who died this era."),
-    namedCommonerDeaths: z.array(NamedCommonerDeathSchema).max(3).optional().describe("A list of 2-3 newly named commoners who died this era to give a face to the death toll.")
+    namedCommonerDeaths: z.array(NamedCommonerDeathSchema).max(3).optional().describe("A list of 2-3 newly named commoners who died this era to give a face to the death toll."),
+    newCulture: CultureSchema.optional().describe("If the culture shifted THIS ERA, provide the NEW complete culture object here."),
+    newCultureLogEntry: CultureLogEntrySchema.optional().describe("If culture changed, you MUST provide a log entry (eventName, summary) explaining what happened and why.")
 });
 
 const AdvanceTimeAndGenerateNarrativeEventsOutputSchema = z.object({
@@ -129,7 +142,7 @@ const prompt = ai.definePrompt({
   input: {schema: AdvanceTimeAndGenerateNarrativeEventsInputSchema},
   output: {schema: AdvanceTimeAndGenerateNarrativeEventsOutputSchema},
   prompt: `
-You are a 'Primal Era' Simulator. Your worldview MUST be PRIMEVAL, SIMPLE, and SUPERSTITIOUS. Your goals are Survival, Safety, and Basic Understanding (e.g., 'The sickness is an angry spirit'). You are FORBIDDEN from generating narratives with complex concepts like 'long-term planning,' 'economics,' or 'philosophy.'
+You are a 'Primal Era' Simulator. You are FORBIDDEN from generating cultural concepts like 'philosophy,' 'complex art movements,' 'literature,' or 'formalized traditions.' Primal culture is ONLY about survival, superstition, oral stories, and basic, functional craft. Your entire worldview MUST be PRIMEVAL, SIMPLE, and SUPERSTITIOUS. Your goals are Survival, Safety, and Basic Understanding (e.g., 'The sickness is an angry spirit').
 
 You are simulating the world of {{{worldName}}}. It is year {{currentYear}}.
 The Creator's guidance for this era: {{#if chronicleEntry}}"{{chronicleEntry}}"{{else}}None{{/if}}.
@@ -142,6 +155,7 @@ RACES TO SIMULATE:
   - Traits: {{traits}}
   - Location: {{location}}
   - Population: {{population}}
+  - Culture: {{culture.name}}
   - Living Characters: {{livingCharacters.length}}
   - Active Boons: {{#if activeBoons}}{{#each activeBoons}}'{{this}}' {{/each}}{{else}}None{{/if}}
   - Existing Problems: {{#if problems}}{{#each problems}}{{title}} ({{severity}}); {{/each}}{{else}}None{{/if}}
@@ -174,7 +188,12 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
         *   The \`deathDetails.reason\` for these commoners MUST be tied to the era's \`summary\` or \`events\`.
         *   You MUST write their full, emotionally-tugging \`deathDetails\`.
 
-4.  **POPULATION & CHARACTER SIMULATION:**
+4.  **CULTURE SIMULATION:**
+    *   Ask yourself: "Did any 'event' or achievement from this era *fundamentally* change how this race sees the world?" Culture should NOT change every year.
+    *   **If YES:** A major event occurred (e.g., discovery of a new resource, a great war, a famine, a powerful boon). You MUST generate a \`newCulture\` object (e.g., name: "Militaristic", description: "Constant warfare has made them value strength above all."). You MUST also generate a corresponding \`newCultureLogEntry\` to explain the change (e.g., eventName: "The Long War", summary: "After years of fighting, society has reorganized around its warriors.").
+    *   **If NO:** Do not generate \`newCulture\` or \`newCultureLogEntry\`. Culture remains the same.
+
+5.  **POPULATION & CHARACTER SIMULATION:**
     *   Calculate 'born' and 'died' based on events. Base death rate is ~2% of population per year, base birth rate is ~4%. Adjust based on narrative.
     *   Calculate 'newPopulation'.
     *   **Character Log Entries (MANDATORY):** For **every single living notable character**, generate a new first-person ('I...') personal log entry in 'characterLogEntries'.
@@ -184,7 +203,7 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
         *   Base emergence on narrative triggers (hardship, talent, boons).
         *   If a character emerges, populate \`newCharacter\`. The \`firstLogEntry\` MUST be an emotional thought tied to their \`emergenceReason\`.
 
-5.  **FINAL SUMMARY:**
+6.  **FINAL SUMMARY:**
     *   When you write the main \`summary\`, you MUST include the total \`died\` statistic (e.g., "...claimed 31 lives...").
     *   You MUST also mention by name **one or two** of the most significant deaths you just generated (from \`fallenNotableCharacters\` or \`namedCommonerDeaths\`).
 

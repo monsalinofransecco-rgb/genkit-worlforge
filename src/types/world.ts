@@ -67,6 +67,17 @@ export interface HistoryEntry {
     emergenceReason?: string;
 }
 
+export interface Culture {
+    name: string;
+    description: string;
+}
+
+export interface CultureLogEntry {
+    year: number;
+    eventName: string;
+    summary: string;
+}
+
 export interface Race {
   id: string;
   name: string;
@@ -82,6 +93,8 @@ export interface Race {
   status: string; // e.g., "Emerging", "Stable", "Declining"
   religion: { name: string; };
   government: { name: string; };
+  culture: Culture;
+  cultureLog: CultureLogEntry[];
 }
 
 export interface NarrativeEntry {

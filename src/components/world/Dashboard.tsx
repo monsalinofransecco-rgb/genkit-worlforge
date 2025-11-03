@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getWorldById, saveWorld } from '@/lib/world-store';
-import type { World, HistoryEntry, NotableCharacter, Race, DeathDetails } from '@/types/world';
+import type { World, HistoryEntry, NotableCharacter, Race, DeathDetails, CultureLogEntry, Culture } from '@/types/world';
 import { notFound } from 'next/navigation';
 import {
   Card,
@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { History, Users, Skull, FileText, Swords, Sparkles, Landmark, Store } from 'lucide-react';
 import { GraveyardTab } from './GraveyardTab';
 import { CharactersTab } from './CharactersTab';
-import { RacesTab } from './RacesTab';
+import { CultureTab } from './CultureTab';
 import { PoliticsTab } from './PoliticsTab';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -75,6 +75,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
         population: race.population,
         traits: race.traits || "",
         location: race.location || "",
+        culture: race.culture,
         livingCharacters: race.notableCharacters.filter(c => c.status === 'alive'),
         problems: race.problems || [],
         activeBoons: race.activeBoons || [],
@@ -98,7 +99,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
           const raceResult = raceResults.find(res => res.raceId === originalRace.id);
           if (!raceResult) return originalRace;
 
-          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths } = raceResult;
+          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry } = raceResult;
 
           const newHistoryEntry: HistoryEntry = {
               year: newYear,
@@ -166,13 +167,26 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                   char.age += years;
               }
           });
+          
+          let updatedCulture = originalRace.culture;
+          if (newCulture) {
+              updatedCulture = newCulture;
+          }
+
+          let updatedCultureLog = originalRace.cultureLog || [];
+          if (newCultureLogEntry) {
+              updatedCultureLog.push({ ...newCultureLogEntry, year: newYear });
+          }
+
 
           return {
               ...originalRace,
               population: populationChange.newPopulation,
               problems: updatedProblems || originalRace.problems,
               notableCharacters: updatedCharacters,
-              history: [...originalRace.history, newHistoryEntry]
+              history: [...originalRace.history, newHistoryEntry],
+              culture: updatedCulture,
+              cultureLog: updatedCultureLog,
           };
       });
 
@@ -272,7 +286,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                         <HistoryTab race={race} />
                     </TabsContent>
                      <TabsContent value="culture" className="pt-6">
-                        <RacesTab race={race} setWorld={updateRaceInWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
+                        <CultureTab race={race} />
                     </TabsContent>
                      <TabsContent value="politics" className="pt-6">
                         <PoliticsTab />
@@ -304,7 +318,7 @@ function DashboardSkeleton() {
       <Card>
         <CardHeader className='items-center'>
           <Skeleton className="h-12 w-1/3" />
-          <Skeleton className="h-4 w-1/4" />
+          <Skeleton className="h-4 w-1/quarter" />
         </CardHeader>
       </Card>
       <div className="space-y-4">

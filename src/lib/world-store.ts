@@ -1,6 +1,6 @@
 'use client';
 
-import type { World, Race, HistoryEntry, NotableCharacter } from '@/types/world';
+import type { World, Race, HistoryEntry, NotableCharacter, Culture, CultureLogEntry } from '@/types/world';
 
 const WORLDS_STORAGE_KEY = 'worldforge-chronicles-worlds';
 
@@ -39,6 +39,8 @@ export function getWorlds(): World[] {
           status: race.status || "Emerging",
           religion: race.religion || { name: "Animism" },
           government: race.government || { name: "Tribal" },
+          culture: race.culture || { name: "Nascent", description: "A culture centered on basic survival. All value is placed on finding food, seeking shelter, and protecting the young. There are no formal traditions, art forms, or spiritual beliefs beyond simple superstitions." },
+          cultureLog: race.cultureLog || [],
         };
       }),
       notableCharacters: [], // Moved to race level
@@ -92,6 +94,8 @@ export function createPreliminaryWorld(name: string, raceCount: number): World {
         status: "Emerging",
         religion: { name: "Animism" },
         government: { name: "Tribal" },
+        culture: { name: "Nascent", description: "A culture centered on basic survival. All value is placed on finding food, seeking shelter, and protecting the young. There are no formal traditions, art forms, or spiritual beliefs beyond simple superstitions." },
+        cultureLog: [],
       })),
       population: 0,
       significantEvents: [`The world of ${name} was forged.`],
