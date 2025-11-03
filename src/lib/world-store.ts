@@ -40,14 +40,19 @@ export function saveWorld(world: World): void {
 // Preliminary world creation
 export function createPreliminaryWorld(name: string, raceCount: number): World {
     const worldId = "world_" + Date.now();
-    const cataclysmType = ["flood", "volcano", "blight"][Math.floor(Math.random() * 3)];
 
     const newWorld: World = {
       id: worldId,
       name: name,
       era: "Primal Era",
       currentYear: 1,
-      races: [], // Races will be added in the next step
+      races: Array.from({ length: raceCount }, () => ({
+        id: crypto.randomUUID(),
+        name: '',
+        population: 1000,
+        racePoints: 100,
+        activeBoons: [],
+      })),
       population: 0,
       significantEvents: [`The world of ${name} was forged.`],
       cataclysmPreparations: 'None',
@@ -97,3 +102,5 @@ export function createWorld(name: string, era: string, raceCount: number): World
   saveWorld(newWorld);
   return newWorld;
 }
+
+    

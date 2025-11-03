@@ -36,6 +36,7 @@ const raceSchema = z.object({
   name: z.string().min(3, 'Race name must be at least 3 characters.'),
   traits: z.string().min(10, 'Describe some key traits.'),
   location: z.string().min(5, 'Describe their starting location.'),
+  population: z.number().int().min(100).max(5000).default(1000),
 });
 
 const formSchema = z.object({
@@ -49,11 +50,11 @@ type PageParams = {
 };
 
 export default function PopulateRacesPage({
-  params,
+  params: paramsProp,
 }: {
   params: Promise<PageParams>;
 }) {
-  const { id } = use(params);
+  const params = use(paramsProp);
   const router = useRouter();
   const { toast } = useToast();
   const [world, setWorld] = useState<World | null>(null);
@@ -75,23 +76,24 @@ export default function PopulateRacesPage({
 
   useEffect(() => {
     setIsMounted(true);
-    const loadedWorld = getWorldById(id);
+    const loadedWorld = getWorldById(params.id);
     if (loadedWorld) {
       setWorld(loadedWorld);
       
-      const preliminaryWorld = createPreliminaryWorld(loadedWorld.name, loadedWorld.races.length);
-      const worldRaceCount = preliminaryWorld.races.length;
+      // Determine race count from what was stored.
+      // This is a bit of a hack because we don't store raceCount on the preliminary world.
+      // We stored empty races before, but now we don't.
+      const worldRaceCount = loadedWorld.races.length > 0 ? loadedWorld.races.length : Math.max(1, (Object.keys(loadedWorld).includes('raceCount') ? (loadedWorld as any).raceCount : 0));
       
       const currentRaces = form.getValues('races');
-      const racesToAppend = worldRaceCount - currentRaces.length;
-      if (racesToAppend > 0) {
-        for (let i = 0; i < racesToAppend; i++) {
-          append({ name: '', traits: '', location: '' });
+      if (fields.length === 0 && worldRaceCount > 0) {
+        for (let i = 0; i < worldRaceCount; i++) {
+          append({ name: '', traits: '', location: '', population: 1000 });
         }
       }
        setRaceCount(worldRaceCount);
     }
-  }, [id, append, form]);
+  }, [params.id, append, form, fields.length]);
 
   async function onSubmit(data: FormValues) {
     if (!world) return;
@@ -112,7 +114,7 @@ export default function PopulateRacesPage({
           );
         }
         
-        const population = 800 + Math.floor(Math.random() * 401); // 800-1200
+        const population = raceData.population;
         totalPopulation += population;
 
         finalRaces.push({
@@ -166,8 +168,18 @@ export default function PopulateRacesPage({
     );
   }
 
-  if (!world) {
-    return notFound();
+  if (!world || raceCount === 0) {
+    // If there's no world or we couldn't determine the race count, show loading or not found.
+    // The latter can happen if the preliminary world wasn't created correctly.
+    if (isMounted && !world) return notFound();
+    return (
+      <div className="flex flex-col min-h-screen bg-zinc-950">
+        <Header />
+        <main className="flex-grow flex items-center justify-center p-4">
+          <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -187,7 +199,7 @@ export default function PopulateRacesPage({
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)}>
                 <Tabs defaultValue="race-0" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className={`grid w-full grid-cols-${raceCount}`}>
                     {Array.from({ length: raceCount }).map((_, i) => (
                       <TabsTrigger key={i} value={`race-${i}`}>
                         Race {i + 1}
@@ -222,7 +234,7 @@ export default function PopulateRacesPage({
                           name={`races.${index}.traits`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Defining Traits</FormLabel>
+                              <FormLabel>Description & Traits</FormLabel>
                               <FormControl>
                                 <Textarea
                                   placeholder="Describe their culture, appearance, and core philosophies. Are they stoic builders, nomadic mystics, or fierce warriors?"
@@ -234,22 +246,42 @@ export default function PopulateRacesPage({
                             </FormItem>
                           )}
                         />
-                        <FormField
-                          control={form.control}
-                          name={`races.${index}.location`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Starting Location</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="e.g., The Crystal Mountains, The Whispering Marshes"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                           <FormField
+                            control={form.control}
+                            name={`races.${index}.location`}
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Starting Location</FormLabel>
+                                <FormControl>
+                                    <Input
+                                    placeholder="e.g., The Crystal Mountains"
+                                    {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name={`races.${index}.population`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Starting Population</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                        type="number"
+                                        placeholder="e.g., 1000"
+                                        {...field}
+                                        onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                       </div>
                     </TabsContent>
                   ))}
@@ -274,3 +306,5 @@ export default function PopulateRacesPage({
     </div>
   );
 }
+
+    
