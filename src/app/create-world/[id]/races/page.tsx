@@ -30,6 +30,7 @@ import { runGenerateRaceNamingProfile } from '@/app/actions';
 import type { World, Race } from '@/types/world';
 import { Loader2, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { createPreliminaryWorld } from '@/lib/world-store';
 
 const raceSchema = z.object({
   name: z.string().min(3, 'Race name must be at least 3 characters.'),
@@ -72,7 +73,9 @@ export default function PopulateRacesPage({
     const loadedWorld = getWorldById(params.id);
     if (loadedWorld) {
       setWorld(loadedWorld);
-      const worldRaceCount = loadedWorld.races.length > 0 ? loadedWorld.races.length : Math.max(1, loadedWorld.significantEvents.length -1); // fallback
+      
+      const preliminaryWorld = createPreliminaryWorld(loadedWorld.name, loadedWorld.races.length);
+      const worldRaceCount = preliminaryWorld.races.length;
       
       const currentRaces = form.getValues('races');
       const racesToAppend = worldRaceCount - currentRaces.length;
