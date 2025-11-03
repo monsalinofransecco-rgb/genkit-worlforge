@@ -15,6 +15,7 @@ import {
   Landmark,
   Sparkles,
   MapPin,
+  ShieldQuestion,
 } from 'lucide-react';
 import { ProblemsTab } from './ProblemsTab';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -96,14 +97,42 @@ export function OverviewTab({ race }: TabProps) {
     </div>
   )
 
+  const governmentPopover = (
+    <div className="space-y-2">
+        <h4 className="font-medium leading-none">{race.government.name}</h4>
+        <p className="text-sm text-muted-foreground">
+            {race.government.description}
+        </p>
+    </div>
+  )
+
+  const religionPopover = (
+    <div className="space-y-2">
+        <h4 className="font-medium leading-none">{race.religion.name}</h4>
+        <p className="text-sm text-muted-foreground">
+            {race.religion.description}
+        </p>
+    </div>
+  )
+
+  const culturePopover = (
+      <div className="space-y-2">
+        <h4 className="font-medium leading-none">{race.culture.name}</h4>
+        <p className="text-sm text-muted-foreground">
+            {race.culture.description}
+        </p>
+    </div>
+  )
+
+
   return (
     <div className="space-y-6">
         <div className="grid md:grid-cols-3 gap-4">
             <StatCard title="Population" value={race.population.toLocaleString()} icon={<Users className="text-muted-foreground" />} popoverContent={populationPopover} />
-            <StatCard title="Status" value={race.status} icon={<BookOpen className="text-muted-foreground" />} />
+            <StatCard title="Culture" value={race.culture.name} icon={<Sparkles className="text-muted-foreground" />} popoverContent={culturePopover} />
             <StatCard title="Race Points" value={race.racePoints} icon={<Gem className="text-muted-foreground" />} />
-            <StatCard title="Religion" value={race.religion.name} icon={<Sparkles className="text-muted-foreground" />} />
-            <StatCard title="Government" value={race.government.name} icon={<Landmark className="text-muted-foreground" />} />
+            <StatCard title="Religion" value={race.religion.name} icon={<ShieldQuestion className="text-muted-foreground" />} popoverContent={religionPopover} />
+            <StatCard title="Government" value={race.government.name} icon={<Landmark className="text-muted-foreground" />} popoverContent={governmentPopover} />
             <StatCard title="Location" value={race.location || "Not Set"} icon={<MapPin className="text-muted-foreground" />} />
         </div>
         <ProblemsTab problems={race.problems || []} />

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getWorldById, saveWorld } from '@/lib/world-store';
-import type { World, HistoryEntry, NotableCharacter, Race, DeathDetails, CultureLogEntry, Culture } from '@/types/world';
+import type { World, HistoryEntry, NotableCharacter, Race, DeathDetails, CultureLogEntry, DetailObject, PoliticalLogEntry } from '@/types/world';
 import { notFound } from 'next/navigation';
 import {
   Card,
@@ -76,6 +76,8 @@ export default function Dashboard({ worldId }: { worldId: string }) {
         traits: race.traits || "",
         location: race.location || "",
         culture: race.culture,
+        government: race.government,
+        religion: race.religion,
         livingCharacters: race.notableCharacters.filter(c => c.status === 'alive'),
         problems: race.problems || [],
         activeBoons: race.activeBoons || [],
@@ -99,7 +101,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
           const raceResult = raceResults.find(res => res.raceId === originalRace.id);
           if (!raceResult) return originalRace;
 
-          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry } = raceResult;
+          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry, newGovernment, newReligion, newPoliticLogEntry } = raceResult;
 
           const newHistoryEntry: HistoryEntry = {
               year: newYear,
@@ -177,7 +179,21 @@ export default function Dashboard({ worldId }: { worldId: string }) {
           if (newCultureLogEntry) {
               updatedCultureLog.push({ ...newCultureLogEntry, year: newYear });
           }
+          
+          let updatedGovernment = originalRace.government;
+            if (newGovernment) {
+                updatedGovernment = newGovernment;
+            }
 
+            let updatedReligion = originalRace.religion;
+            if (newReligion) {
+                updatedReligion = newReligion;
+            }
+
+            let updatedPoliticalLog = originalRace.politicalLog || [];
+            if (newPoliticLogEntry) {
+                updatedPoliticalLog.push({ ...newPoliticLogEntry, year: newYear });
+            }
 
           return {
               ...originalRace,
@@ -187,6 +203,9 @@ export default function Dashboard({ worldId }: { worldId: string }) {
               history: [...originalRace.history, newHistoryEntry],
               culture: updatedCulture,
               cultureLog: updatedCultureLog,
+              government: updatedGovernment,
+              religion: updatedReligion,
+              politicalLog: updatedPoliticalLog,
           };
       });
 
@@ -289,7 +308,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                         <CultureTab race={race} />
                     </TabsContent>
                      <TabsContent value="politics" className="pt-6">
-                        <PoliticsTab />
+                        <PoliticsTab race={race} />
                     </TabsContent>
                     <TabsContent value="graveyard" className="pt-6">
                         <GraveyardTab race={race} />

@@ -67,12 +67,18 @@ export interface HistoryEntry {
     emergenceReason?: string;
 }
 
-export interface Culture {
+export interface DetailObject {
     name: string;
     description: string;
 }
 
 export interface CultureLogEntry {
+    year: number;
+    eventName: string;
+    summary: string;
+}
+
+export interface PoliticalLogEntry {
     year: number;
     eventName: string;
     summary: string;
@@ -91,10 +97,11 @@ export interface Race {
   notableCharacters: NotableCharacter[];
   history: HistoryEntry[];
   status: string; // e.g., "Emerging", "Stable", "Declining"
-  religion: { name: string; };
-  government: { name: string; };
-  culture: Culture;
+  religion: DetailObject;
+  government: DetailObject;
+  culture: DetailObject;
   cultureLog: CultureLogEntry[];
+  politicalLog: PoliticalLogEntry[];
 }
 
 export interface NarrativeEntry {

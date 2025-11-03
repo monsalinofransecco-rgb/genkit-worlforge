@@ -1,6 +1,6 @@
 'use client';
 
-import type { World, Race, HistoryEntry, NotableCharacter, Culture, CultureLogEntry } from '@/types/world';
+import type { World, Race, HistoryEntry, NotableCharacter, DetailObject, CultureLogEntry, PoliticalLogEntry } from '@/types/world';
 
 const WORLDS_STORAGE_KEY = 'worldforge-chronicles-worlds';
 
@@ -32,15 +32,29 @@ export function getWorlds(): World[] {
             specialTraits: c.specialTraits || [],
         }));
 
+        const culture: DetailObject = (typeof race.culture === 'string') 
+          ? { name: race.culture, description: 'No description available.'} 
+          : race.culture || { name: "Nascent", description: "A culture centered on basic survival. All value is placed on finding food, seeking shelter, and protecting the young. There are no formal traditions, art forms, or spiritual beliefs beyond simple superstitions." };
+
+        const government: DetailObject = (typeof race.government === 'string')
+            ? { name: race.government, description: 'No description available.'}
+            : race.government || { name: "Tribal", description: "A simple social structure where leadership is informal, often held by the most respected or strongest individual. Decisions are made communally or by the leader for the good of the group." };
+        
+        const religion: DetailObject = (typeof race.religion === 'string')
+            ? { name: race.religion, description: 'No description available.'}
+            : race.religion || { name: "Animism", description: "The belief that spirits or essences inhabit all objects, creatures, and natural phenomena. The world is seen as a place full of spiritual power." };
+
+
         return {
           ...race,
           history,
           notableCharacters,
           status: race.status || "Emerging",
-          religion: race.religion || { name: "Animism" },
-          government: race.government || { name: "Tribal" },
-          culture: race.culture || { name: "Nascent", description: "A culture centered on basic survival. All value is placed on finding food, seeking shelter, and protecting the young. There are no formal traditions, art forms, or spiritual beliefs beyond simple superstitions." },
+          religion,
+          government,
+          culture,
           cultureLog: race.cultureLog || [],
+          politicalLog: race.politicalLog || [],
         };
       }),
       notableCharacters: [], // Moved to race level
@@ -92,10 +106,11 @@ export function createPreliminaryWorld(name: string, raceCount: number): World {
         notableCharacters: [],
         history: [],
         status: "Emerging",
-        religion: { name: "Animism" },
-        government: { name: "Tribal" },
+        religion: { name: "Animism", description: "The belief that spirits or essences inhabit all objects, creatures, and natural phenomena. The world is seen as a place full of spiritual power." },
+        government: { name: "Tribal", description: "A simple social structure where leadership is informal, often held by the most respected or strongest individual. Decisions are made communally or by the leader for the good of the group." },
         culture: { name: "Nascent", description: "A culture centered on basic survival. All value is placed on finding food, seeking shelter, and protecting the young. There are no formal traditions, art forms, or spiritual beliefs beyond simple superstitions." },
         cultureLog: [],
+        politicalLog: [],
       })),
       population: 0,
       significantEvents: [`The world of ${name} was forged.`],
