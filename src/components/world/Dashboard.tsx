@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { History, Users, Skull, FileText, Swords, Sparkles, Landmark, Store } from 'lucide-react';
+import { History, Users, Skull, FileText, Swords, Sparkles, Landmark, Store, Download } from 'lucide-react';
 import { GraveyardTab } from './GraveyardTab';
 import { CharactersTab } from './CharactersTab';
 import { CultureTab } from './CultureTab';
@@ -342,6 +342,33 @@ export default function Dashboard({ worldId }: { worldId: string }) {
     }
   };
 
+  const handleSaveWorld = () => {
+    if (!world) return;
+    try {
+      const worldJson = JSON.stringify(world, null, 2);
+      const blob = new Blob([worldJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `World-${world.name.replace(/\s+/g, '_')}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({
+        title: 'World Saved',
+        description: 'Your world has been downloaded as a JSON file.',
+      });
+    } catch (error) {
+      console.error('Failed to save world:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: 'Could not save the world to a file.',
+      });
+    }
+  };
+
   const activeRace = world?.races.find(r => r.id === activeRaceId);
 
   if (!isMounted) {
@@ -358,31 +385,38 @@ export default function Dashboard({ worldId }: { worldId: string }) {
       <Card>
         <CardHeader>
             <div className="flex justify-between items-start">
+                <div className='flex-none'>
+                    <Button variant="ghost" size="icon" aria-label="Save World" onClick={handleSaveWorld}>
+                        <Download className="h-6 w-6 text-primary" />
+                    </Button>
+                </div>
                 <div className='text-center flex-grow'>
                     <CardTitle className="font-headline text-4xl md:text-5xl text-primary">
                         {world.name}
                     </CardTitle>
                     <CardDescription>Current Year: {world.currentYear} - {world.era}</CardDescription>
                 </div>
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label="Open Creator's Store">
-                            <Store className="h-6 w-6 text-primary" />
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl">
-                       <DialogHeader>
-                            <DialogTitle className="font-headline flex items-center gap-2">
-                                <Sparkles className="text-primary" />
-                                Creator's Toolkit: {activeRace.name}
-                            </DialogTitle>
-                            <DialogDescription>
-                                Use your divine influence or spend Race Points (RP) to guide your people.
-                            </DialogDescription>
-                        </DialogHeader>
-                       <InfluenceTab world={world} setWorld={updateWorld} isLoading={isLoading} activeRaceId={activeRaceId} onBoonPurchase={handleBoonPurchase} />
-                    </DialogContent>
-                </Dialog>
+                <div className='flex-none'>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label="Open Creator's Store">
+                                <Store className="h-6 w-6 text-primary" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl">
+                           <DialogHeader>
+                                <DialogTitle className="font-headline flex items-center gap-2">
+                                    <Sparkles className="text-primary" />
+                                    Creator's Toolkit: {activeRace.name}
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Use your divine influence or spend Race Points (RP) to guide your people.
+                                </DialogDescription>
+                            </DialogHeader>
+                           <InfluenceTab world={world} setWorld={updateWorld} isLoading={isLoading} activeRaceId={activeRaceId} onBoonPurchase={handleBoonPurchase} />
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
         </CardHeader>
       </Card>

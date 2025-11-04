@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,10 +12,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { getWorlds, deleteWorld } from '@/lib/world-store';
+import { getWorlds, deleteWorld, saveWorld } from '@/lib/world-store';
 import type { World } from '@/types/world';
 import Header from '@/components/Header';
-import { BookOpen, PlusCircle, Trash2 } from 'lucide-react';
+import { BookOpen, PlusCircle, Trash2, Upload } from 'lucide-react';
 import Link from 'next/link';
 import {
   AlertDialog,
@@ -26,18 +27,25 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const router = useRouter();
+  const { toast } = useToast();
   const [worlds, setWorlds] = useState<World[]>([]);
   const [worldToDelete, setWorldToDelete] = useState<World | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setIsMounted(true);
+    refreshWorlds();
+  }, []);
+
+  const refreshWorlds = () => {
     const savedWorlds = getWorlds();
     setWorlds(savedWorlds.filter(w => w.races.length > 0 && w.races.every(r => r.name !== '')));
-  }, []);
+  }
 
   const openDeleteDialog = (world: World) => {
     setWorldToDelete(world);
@@ -51,6 +59,45 @@ export default function Home() {
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result;
+        if (typeof text !== 'string') {
+          throw new Error('File content is not readable.');
+        }
+        const loadedWorld = JSON.parse(text) as World;
+
+        // Basic validation
+        if (loadedWorld && loadedWorld.id && loadedWorld.name && Array.isArray(loadedWorld.races)) {
+          saveWorld(loadedWorld);
+          refreshWorlds();
+          toast({
+            title: 'World Loaded',
+            description: `The world of ${loadedWorld.name} has been successfully loaded.`,
+          });
+          // Reset file input
+          if(fileInputRef.current) fileInputRef.current.value = "";
+
+        } else {
+          throw new Error('Invalid world file format.');
+        }
+      } catch (error) {
+        console.error('Failed to load world:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Load Failed',
+          description: error instanceof Error ? error.message : 'Could not parse the world file.',
+        });
+      }
+    };
+    reader.readAsText(file);
+  };
+
   if (!isMounted) {
     return null; // or a loading skeleton
   }
@@ -60,7 +107,7 @@ export default function Home() {
       <Header />
       <main className="flex-grow container mx-auto p-4 md:p-8">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="md:col-span-2 lg:col-span-1">
+          <Card className="md:col-span-1">
             <CardHeader>
               <CardTitle className="font-headline flex items-center gap-2">
                 <PlusCircle className="w-6 h-6" /> Create a New World
@@ -69,12 +116,27 @@ export default function Home() {
                 Forge a new realm and begin its chronicle.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className='space-y-2'>
               <Link href="/create-world" passHref>
                 <Button className="w-full">
                   Begin a New Chronicle
                 </Button>
               </Link>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept=".json"
+                onChange={handleFileChange}
+              />
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Load from File
+              </Button>
             </CardContent>
           </Card>
 
