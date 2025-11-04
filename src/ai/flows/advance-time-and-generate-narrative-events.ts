@@ -124,6 +124,7 @@ const RaceSimulationInputSchema = z.object({
     technologies: z.array(z.string()),
     namingProfile: NamingProfileSchema.optional(),
     existingNames: z.array(z.string()).describe("A list of all names currently or previously used by this race to ensure new names are unique."),
+    boonDirectives: z.array(BoonDirectiveSchema).optional().describe("An array of specific, targeted boon directives from the Creator for THIS RACE."),
 });
 
 const AdvanceTimeAndGenerateNarrativeEventsInputSchema = z.object({
@@ -133,7 +134,6 @@ const AdvanceTimeAndGenerateNarrativeEventsInputSchema = z.object({
   currentYear: z.number().describe('The current year in the world.'),
   races: z.array(RaceSimulationInputSchema).describe("An array of all races to be simulated."),
   chronicleEntry: z.string().optional().describe('The latest user-written chronicle entry to influence events.'),
-  boonDirectives: z.array(BoonDirectiveSchema).optional().describe("An array of specific, targeted boon directives from the Creator."),
   worldMap: z.array(MapTileSchema).describe("The complete world map grid."),
 });
 export type AdvanceTimeAndGenerateNarrativeEventsInput = z.infer<typeof AdvanceTimeAndGenerateNarrativeEventsInputSchema>;
@@ -216,13 +216,6 @@ All of your outputs ('summary', 'newProblems', 'characterLogEntries') **MUST** r
 
 You are simulating the world of {{{worldName}}}. It is year {{currentYear}}.
 The Creator's guidance for this era: {{#if chronicleEntry}}"{{chronicleEntry}}"{{else}}None{{/if}}.
-{{#if boonDirectives}}
-ACTIVE CREATOR DIRECTIVES:
-{{#each boonDirectives}}
-  - Directive {{this.id}} (Type: {{this.boonId}}): Targets [{{#each this.targets}}'{{this}}'{{#unless @last}}, {{/unless}}{{/each}}] - Content: "{{this.content}}"
-{{/each}}
-{{/if}}
-
 
 RACES TO SIMULATE:
 {{#each races}}
@@ -236,6 +229,7 @@ RACES TO SIMULATE:
   - Living Characters: {{livingCharacters.length}}
   - Active Boons: {{#if boons}}Yes{{else}}None{{/if}}
   - Existing Problems: {{#if problems}}{{#each problems}}'{{title}}' ({{severity}}); {{/each}}{{else}}None{{/if}}
+  - Creator Directives for this race: {{#if boonDirectives}}{{boonDirectives.length}}{{else}}0{{/if}}
 {{/each}}
 
 THE WORLD MAP:
@@ -247,7 +241,7 @@ The world is a grid. Here are all the tiles you need to know about:
 FOR EACH RACE, FOLLOW THESE DIRECTIVES:
 
 1.  **PERSONA & TONE:**
-    *   **Primal Filter:** The entire 'summary' and 'characterLogEntries' for each race MUST reflect a primal, superstitious worldview. Think survival, immediate threats, and simple cause-and-effect.
+    *   **Primal Filter:** The entire 'summary' and 'characterLogEntries' for the current race MUST reflect a primal, superstitious worldview. Think survival, immediate threats, and simple cause-and-effect.
     *   **Guidance Check:**
         {{#if chronicleEntry}}
         *   **Creator Is Active:** The Creator has provided guidance: "{{chronicleEntry}}". The 'summary' MUST narrate the outcome of this guidance for the race. You are AUTHORIZED to use 'Creator's guidance' language.
@@ -256,7 +250,7 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
         {{/if}}
 
 2.  **BOON INTEGRATION (MANDATORY):**
-    You must check for active boons on the *current race you are simulating* and apply their effects.
+    You must check the 'boons' object for the *current race you are simulating* and apply their effects.
     
     {{#if boons.pop_boom_1}}
     - **Boon Active: Boon of Fertility.** You MUST apply a positive bias to the 'populationChange.born' statistic and narrate this in the 'summary'.
@@ -273,7 +267,7 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     
 
 3.  **PROBLEM & EVENT SIMULATION:**
-    *   Evaluate 'chronicleEntry' and 'activeBoons'. If they solve a problem, resolve it in the 'summary' and REMOVE it from 'updatedProblems'.
+    *   Evaluate 'chronicleEntry' and the race's 'boons'. If they solve a problem, resolve it in the 'summary' and REMOVE it from 'updatedProblems'.
     *   If a problem was IGNORED, ESCALATE its severity in 'updatedProblems'.
     *   If a 'Critical' problem was ignored, generate a CATASTROPHIC outcome with a massive 'populationChange.died' number.
     *   Generate new problems (max 3 total per race) based on events.
@@ -312,8 +306,8 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     *   **Memorialize:** The summary MUST also mention by name **one or two** of the most significant deaths you just generated (from 'fallenNotableCharacters' or 'namedCommonerDeaths').
     
 8.  **TARGETED DIRECTIVES (MANDATORY):**
-    *   You MUST check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If a directive exists for the race you are currently simulating, you MUST execute it.
-    *   **Execution Rule:** When a directive has a 'target' character ID, you MUST find that character in the 'livingCharacters' list for the race. The resulting event or summary MUST use that character's name and title. **DO NOT invent a new character name for a targeted directive.** For example, if a directive targets character 'ID-123' whose name is 'Kaelen', your output MUST say 'Kaelen received a dream', NOT 'A chieftain received a dream'.
+    *   You MUST check the 'boonDirectives' list FOR THE CURRENT RACE. If a directive exists, you MUST execute it.
+    *   **Execution Rule:** When a directive has a 'target' character ID, you MUST find that character in the race's 'livingCharacters' list. The resulting event or summary MUST use that character's name and title. **DO NOT invent a new character name for a targeted directive.** For example, if a directive targets character 'ID-123' whose name is 'Kaelen', your output MUST say 'Kaelen received a dream', NOT 'A chieftain received a dream'.
     *   You MUST interpret the directive's 'boonId' and 'content' to generate a corresponding 'event' and narrate it in the 'summary'.
 
 9.  **ACHIEVEMENT GENERATION (MANDATORY):**
@@ -344,14 +338,6 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     When you are required to generate a name for a 'newCharacter' or a 'namedCommonerDeath', you MUST use the provided 'namingProfile' for that race. The names must be unique and consistent with the cultural and linguistic rules described in the profile. **YOU MUST NOT REPEAT ANY NAME FROM THE 'existingNames' LIST.**
 
 Your final output MUST be a single JSON object matching the defined output schema, containing a 'newYear' and an array of 'raceResults'.
-
-The Creator's guidance for this era: {{#if chronicleEntry}}"{{chronicleEntry}}"{{else}}None{{/if}}.
-{{#if boonDirectives}}
-ACTIVE CREATOR DIRECTIVES:
-{{#each boonDirectives}}
-  - Directive {{this.id}} (Type: {{this.boonId}}): Targets [{{#each this.targets}}'{{this}}'{{#unless @last}}, {{/unless}}{{/each}}] - Content: "{{this.content}}"
-{{/each}}
-{{/if}}
 `,
   config: {
       temperature: 1,
@@ -418,3 +404,4 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     
 
     
+

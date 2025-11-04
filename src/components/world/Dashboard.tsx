@@ -35,7 +35,7 @@ import { InfluenceTab } from './InfluenceTab';
 import { OverviewTab } from './OverviewTab';
 import { HistoryTab } from './HistoryTab';
 import { BoonModal } from '../BoonModal';
-import { Boon } from '@/data/boons';
+import { Boon, creatorStoreBoons } from '@/data/boons';
 import { worldMap } from '@/data/worldMap';
 
 
@@ -134,6 +134,8 @@ export default function Dashboard({ worldId }: { worldId: string }) {
 
         const existingNames = race.notableCharacters.map(c => c.name);
 
+        const raceDirectives = (world.boonDirectives || []).filter(d => d.raceId === race.id);
+
         return {
             id: race.id,
             name: race.name,
@@ -150,6 +152,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
             knownTiles: race.knownTiles,
             technologies: race.technologies,
             existingNames,
+            boonDirectives: raceDirectives,
         }
     });
 
@@ -160,7 +163,6 @@ export default function Dashboard({ worldId }: { worldId: string }) {
       currentYear: world.currentYear,
       races: raceInputs,
       chronicleEntry: world.significantEvents[world.significantEvents.length-1],
-      boonDirectives: world.boonDirectives,
       worldMap: map,
     });
     setIsLoading(false);
