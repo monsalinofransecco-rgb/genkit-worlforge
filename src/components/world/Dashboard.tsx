@@ -194,13 +194,12 @@ export default function Dashboard({ worldId }: { worldId: string }) {
           const raceResult = raceResults.find(res => res.raceId === originalRace.id);
           if (!raceResult) return originalRace;
 
-          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry, newGovernment, newReligion, newPoliticLogEntry, newAchievements, newlyOccupiedTiles, newlyKnownTiles, newTechnologies, newSettlement } = raceResult;
+          const { narrative, populationChange, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry, newGovernment, newReligion, newPoliticLogEntry, newAchievements, updatedOccupiedTiles, updatedKnownTiles, newTechnologies, newSettlement } = raceResult;
 
           const newHistoryEntry: HistoryEntry = {
               year: newYear,
-              summary,
+              narrative,
               populationChange,
-              events,
               emergenceReason,
           };
 
@@ -279,14 +278,14 @@ export default function Dashboard({ worldId }: { worldId: string }) {
           });
 
           const knownTilesSet = new Set(originalRace.knownTiles);
-          (newlyOccupiedTiles || []).forEach(tileId => {
+          (updatedOccupiedTiles || []).forEach(tileId => {
               if (!originalRace.occupiedTiles.includes(tileId)) {
                   originalRace.occupiedTiles.push(tileId);
               }
               knownTilesSet.add(tileId);
               getAdjacentTileIds(tileId).forEach(id => knownTilesSet.add(id));
           });
-          (newlyKnownTiles || []).forEach(id => knownTilesSet.add(id));
+          (updatedKnownTiles || []).forEach(id => knownTilesSet.add(id));
 
           return {
               ...originalRace,
@@ -300,9 +299,9 @@ export default function Dashboard({ worldId }: { worldId: string }) {
               religion: newReligion || originalRace.religion,
               politicalLog: updatedPoliticalLog,
               racePoints: updatedRacePoints,
-              occupiedTiles: newlyOccupiedTiles ? [...originalRace.occupiedTiles, ...newlyOccupiedTiles] : originalRace.occupiedTiles,
+              occupiedTiles: updatedOccupiedTiles,
               knownTiles: Array.from(knownTilesSet),
-              technologies: newTechnologies ? [...originalRace.technologies, ...newTechnologies] : originalRace.technologies,
+              technologies: newTechnologies ? [...(originalRace.technologies || []), ...newTechnologies] : originalRace.technologies,
               settlement: newSettlement || originalRace.settlement,
           };
       });
@@ -324,7 +323,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
         races: updatedRaces,
         population: totalPopulation,
         boonDirectives: [], 
-        narrativeLog: [...world.narrativeLog], 
+        narrativeLog: [...world.narrativeLog, ...raceResults.map(r => ({year: newYear, type: 'narrative', content: r.narrative}))], 
       });
 
       toast({
@@ -504,3 +503,5 @@ function DashboardSkeleton() {
     </div>
   );
 }
+
+    

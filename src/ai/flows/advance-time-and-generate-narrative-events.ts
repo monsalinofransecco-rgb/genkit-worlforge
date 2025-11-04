@@ -141,13 +141,12 @@ export type AdvanceTimeAndGenerateNarrativeEventsInput = z.infer<typeof AdvanceT
 
 const RaceSimulationResultSchema = z.object({
     raceId: z.string().describe("The ID of the race that was simulated."),
-    summary: z.string().describe("A 3rd person, 'historian' voice summary (at least 3-4 sentences) of the main events, successes, and failures for this race during the era. This MUST be written from a PRIMAL, SIMPLE, and SUPERSTITIOUS perspective. It MUST mention what the notable characters did, the total number of deaths, and name one or two significant fallen individuals."),
+    narrative: z.string().describe("A compelling, 3-5 paragraph narrative in a 'historian' voice. This is the main story of the era. It MUST weave together the most important events, character actions (from new characters or log entries), and significant deaths (from fallenNotableCharacters). It should be immersive and at least 150 words long."),
     populationChange: z.object({
         born: z.number().describe("Number of births during this period."),
         died: z.number().describe("Number of deaths during this period."),
         newPopulation: z.number().describe("The final population after births and deaths.")
     }),
-    events: z.array(z.string()).describe("A bullet-point list of key notable events that occurred for this race."),
     emergenceReason: z.string().optional().describe("If a new character emerged, a description of why they emerged. This is tied to their backstory."),
     updatedProblems: z.array(ProblemSchema).describe('The updated list of all active problems after the simulation for this race.'),
     newCharacter: NewCharacterSchema.optional().describe("The full data for a new notable character, if one emerged this era for this race."),
@@ -212,7 +211,7 @@ Your worldview, logic, and narrative **MUST** be **PRIMEVAL, SIMPLE, and SUPERST
     *   "Stockpile more nuts."
     *   "Create a simple ritual to please the (perceived) angry spirit."
 
-All of your outputs ('summary', 'newProblems', 'characterLogEntries') **MUST** reflect this simple, primal worldview.
+All of your outputs ('narrative', 'newProblems', 'characterLogEntries') **MUST** reflect this simple, primal worldview.
 ---
 
 You are simulating the world of {{{worldName}}}. It is year {{currentYear}}.
@@ -242,25 +241,25 @@ RACES TO SIMULATE:
 FOR EACH RACE, FOLLOW THESE DIRECTIVES:
 
 1.  **PERSONA & TONE:**
-    *   **Primal Filter:** The entire 'summary' and 'characterLogEntries' for the current race MUST reflect a primal, superstitious worldview. Think survival, immediate threats, and simple cause-and-effect.
+    *   **Primal Filter:** The entire 'narrative' and 'characterLogEntries' for the current race MUST reflect a primal, superstitious worldview. Think survival, immediate threats, and simple cause-and-effect.
     *   **Guidance Check:**
         {{#if chronicleEntry}}
-        *   **Creator Is Active:** The Creator has provided guidance: "{{chronicleEntry}}". The 'summary' MUST narrate the outcome of this guidance for the race. You are AUTHORIZED to use 'Creator's guidance' language.
+        *   **Creator Is Active:** The Creator has provided guidance: "{{chronicleEntry}}". The 'narrative' MUST narrate the outcome of this guidance for the race. You are AUTHORIZED to use 'Creator's guidance' language.
         {{else}}
-        *   **Autonomous Mode:** The Creator was silent. The 'summary' MUST be driven *only* by the race's 'problems' and 'traits'. You are STRICTLY FORBIDDEN from using words like 'Creator,' 'divine,' or 'vision' UNLESS a Boon (like 'wisdom') is active. If you must narrate a vision, it is a 'strange, prophetic dream' from the race's own mind.
+        *   **Autonomous Mode:** The Creator was silent. The 'narrative' MUST be driven *only* by the race's 'problems' and 'traits'. You are STRICTLY FORBIDDEN from using words like 'Creator,' 'divine,' or 'vision' UNLESS a Boon (like 'wisdom') is active. If you must narrate a vision, it is a 'strange, prophetic dream' from the race's own mind.
         {{/if}}
 
 2.  **BOON INTEGRATION (MANDATORY):**
     You must check the 'boons' object for the *current race you are simulating* and apply their effects.
     
     {{#if boons.pop_boom_1}}
-    - **Boon Active: Boon of Fertility.** You MUST apply a positive bias to the 'populationChange.born' statistic and narrate this in the 'summary'.
+    - **Boon Active: Boon of Fertility.** You MUST apply a positive bias to the 'populationChange.born' statistic and narrate this in the 'narrative'.
     {{/if}}
     {{#if boons.great_leader}}
     - **Boon Active: Boon of Heroism.** You MUST generate one 'newCharacter'.
     {{/if}}
     {{#if boons.inno_burst_1}}
-    - **Boon Active: Boon of Discovery.** You MUST generate a notableEvent for a primal discovery.
+    - **Boon Active: Boon of Discovery.** You MUST generate a notableEvent for a primal discovery and include it in the 'narrative'.
     {{/if}}
     {{#if boons.gov_reform}}
     - **Boon Active: Governmental Reform.** You MUST generate a 'newGovernment' object and a 'newPoliticLogEntry'.
@@ -268,7 +267,7 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     
 
 3.  **PROBLEM & EVENT SIMULATION:**
-    *   Evaluate 'chronicleEntry' and the race's 'boons'. If they solve a problem, resolve it in the 'summary' and REMOVE it from 'updatedProblems'.
+    *   Evaluate 'chronicleEntry' and the race's 'boons'. If they solve a problem, describe the resolution in the 'narrative' and REMOVE it from 'updatedProblems'.
     *   If a problem was IGNORED, ESCALATE its severity in 'updatedProblems'.
     *   If a 'Critical' problem was ignored, generate a CATASTROPHIC outcome with a massive 'populationChange.died' number.
     *   Generate new problems (max 3 total per race) based on events.
@@ -279,7 +278,7 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     *   **Commoner Deaths:** Look at your 'populationChange.died' statistic. To make this number feel real, you MUST "promote" **2-3** of these anonymous deaths into named entries for the 'namedCommonerDeaths' array. **Do not exceed 3.**
         *   For each, invent a new, culturally-appropriate 'name' **using the NAMING PROFILE**.
         *   Give them a simple 'title' (e.g., 'a young hunter,' 'an old farmer,' 'a brave mother').
-        *   The 'deathDetails.reason' for these commoners MUST be tied to the era's 'summary' or 'events'.
+        *   The 'deathDetails.reason' for these commoners MUST be tied to the era's events.
         *   You MUST write their full, emotionally-tugging 'deathDetails'.
 
 5.  **CULTURE, GOVERNMENT, & RELIGION SIMULATION (SLOW SYSTEMS):**
@@ -299,20 +298,23 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
         *   **Last Spark Rule:** If a race has 0 living characters, you MUST generate 1 new character.
         *   Base emergence on narrative triggers (hardship, talent, boons).
         *   If a character emerges, populate 'newCharacter'. The character's 'name' **MUST** be generated using the NAMING PROFILE. The 'firstLogEntry' MUST be an emotional thought tied to their 'emergenceReason'.
-7.  **FINAL SUMMARY (CRITICAL NARRATIVE TASK):**
-    *   Write a rich, detailed 'summary' of **at least 3-4 sentences**.
-    *   **Character Focus:** The summary MUST describe what the 'livingCharacters' were doing. Did they lead, fail, discover, or struggle?
-    *   **Consistency:** The summary MUST be consistent with the race's history, traits, and culture.
-    *   **Mortality:** The summary MUST include the total 'died' statistic (e.g., "...claimed 31 lives...").
-    *   **Memorialize:** The summary MUST also mention by name **one or two** of the most significant deaths you just generated (from 'fallenNotableCharacters' or 'namedCommonerDeaths').
+7.  **THE IMMERSIVE NARRATIVE (MANDATORY):**
+    *   You **MUST** generate a 'narrative' field. This is the main story of the era, written in a 3rd-person "historian" voice.
+    *   It **MUST** be compelling, detailed, and at least 3-5 paragraphs long (minimum 150 words).
+    *   **Crucially, you MUST weave all major occurrences into this single story.** This includes:
+        *   **Notable Events:** The "First Contact," the "Discovery of Fire," a "Great Famine," etc.
+        *   **Character Actions:** Mention *by name* what notable characters (from 'livingCharacters') did, as reflected in the 'characterLogEntries' you are generating. (e.g., "While the tribe starved, the hunter *Grak* wrote of his desperate, lonely hunts...").
+        *   **Significant Deaths:** You MUST mention by name one or two of the most significant deaths (from 'fallenNotableCharacters' or 'namedCommonerDeaths') and tie their death to the era's events.
+        *   **Context:** The narrative MUST be consistent with the race's 'traits', 'problems', and 'technologies'.
+    *   **This 'narrative' field REPLACES the old 'summary' and 'events' list.**
     
 8.  **TARGETED DIRECTIVES (MANDATORY):**
     *   You MUST check the 'boonDirectives' list FOR THE CURRENT RACE. If a directive exists, you MUST execute it.
     *   **Execution Rule:** When a directive has a 'target' character ID, you MUST find that character in the race's 'livingCharacters' list. The resulting event or summary MUST use that character's name and title. **DO NOT invent a new character name for a targeted directive.** For example, if a directive targets character 'ID-123' whose name is 'Kaelen', your output MUST say 'Kaelen received a dream', NOT 'A chieftain received a dream'.
-    *   You MUST interpret the directive's 'boonId' and 'content' to generate a corresponding 'event' and narrate it in the 'summary'.
+    *   You MUST interpret the directive's 'boonId' and 'content' to generate a corresponding event and narrate it in the 'narrative'.
 
 9.  **ACHIEVEMENT GENERATION (MANDATORY):**
-    You must review this race's 'events' list that you just generated. If a major, "first-time" milestone occurred, you **MUST** generate a 'newAchievement' object for it.
+    You must review the **major events described in your 'narrative'**. If a major, "first-time" milestone occurred, you **MUST** generate a 'newAchievement' object for it.
     *   "The Gift of Fire" (Discovery of fire): 50 RP
     *   "First Tamed Beast" (First domesticated animal): 75 RP
     *   "The Elder's Accord" (First formal government): 100 RP
@@ -332,7 +334,7 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
 
 11. **FIRST CONTACT PROTOCOL (CRITICAL):**
     *   While exploring, if a race moves into a tile that is already on another race's 'occupiedTiles' list (check the input), this is a **"First Contact"** event.
-    *   You **MUST** generate a major 'notableEvent' for *both* races involved.
+    *   You **MUST** describe this "First Contact" event in detail within the **'narrative'** for *both* races involved.
     *   The outcome of the First Contact **MUST** be logical. Base it on the traits of *both* races (e.g., "Hardy, Industrious" meeting "Mystical, Xenophobic" will be tense).
     *   The races now share 'knownTiles' for all adjacent territories.
 12. **NAMING CONVENTION (CRITICAL):**
@@ -380,9 +382,8 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
         }
         return {
             raceId: race.id,
-            summary: "Time passed uneventfully for this race.",
+            narrative: "Time passed uneventfully for this race.",
             populationChange: { born: 0, died: 0, newPopulation: race.population },
-            events: [],
             updatedProblems: race.problems || [],
             characterLogEntries: [],
             fallenNotableCharacters: [],
@@ -399,3 +400,7 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
+
+    
+
+    
