@@ -311,7 +311,7 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
 8.  **TARGETED DIRECTIVES (MANDATORY):**
 You must check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If directives exist for the race you are simulating, you MUST execute them by interpreting the 'boonId' and 'content' for the specified 'targets'. For example:
 {{#each boonDirectives}}
-  - **Directive for {{this.boonId}}:** Targets {{#each this.targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}. Content: "{{this.content}}". You MUST implement this.
+- **Directive for {{this.boonId}}:** Targets {{#each this.targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}. Content: "{{this.content}}". You MUST implement this.
 {{/each}}
 
 
