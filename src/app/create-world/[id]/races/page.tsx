@@ -37,11 +37,7 @@ const raceSchema = z.object({
   description: z.string().min(10, 'Describe the race.'),
   racialTraits: z
     .string()
-    .min(1, 'List at least one common trait.')
-    .refine(
-      (value) => value.split(',').filter((t) => t.trim()).length <= 5,
-      'You can enter a maximum of 5 racial traits.'
-    ),
+    .min(1, 'List at least one common trait.'),
   specialTraits: z
     .string()
     .optional()
@@ -133,7 +129,7 @@ export default function PopulateRacesPage({
         return {
           ...templateRace, // Keep id, occupiedTiles, etc. from the template
           name: raceData.name,
-          traits: `${raceData.description} Common traits: ${raceData.racialTraits}. Special traits: ${raceData.specialTraits || 'None'}.`,
+          traits: `${raceData.description} They begin in ${raceData.location}. Common traits: ${raceData.racialTraits}. Special traits: ${raceData.specialTraits || 'None'}.`,
           population: population,
           racePoints: 100,
           activeBoons: [],
