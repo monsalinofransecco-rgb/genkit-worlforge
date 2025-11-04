@@ -132,6 +132,8 @@ export default function Dashboard({ worldId }: { worldId: string }) {
             boons[boonId] = true;
         });
 
+        const existingNames = race.notableCharacters.map(c => c.name);
+
         return {
             id: race.id,
             name: race.name,
@@ -147,6 +149,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
             occupiedTiles: race.occupiedTiles,
             knownTiles: race.knownTiles,
             technologies: race.technologies,
+            existingNames,
         }
     });
 
@@ -271,7 +274,6 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                     ...(newCharacter ? [newCharacter.name] : []),
                     ...(namedCommonerDeaths || []).map(d => d.name)
                 ];
-                updatedNamingProfile.exampleNames = [...new Set([...(updatedNamingProfile.exampleNames || []), ...newNames])];
             }
             
             let updatedRacePoints = originalRace.racePoints;
@@ -467,3 +469,5 @@ function DashboardSkeleton() {
     </div>
   );
 }
+
+    

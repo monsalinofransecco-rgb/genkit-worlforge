@@ -123,6 +123,7 @@ const RaceSimulationInputSchema = z.object({
     knownTiles: z.array(z.string()),
     technologies: z.array(z.string()),
     namingProfile: NamingProfileSchema.optional(),
+    existingNames: z.array(z.string()).describe("A list of all names currently or previously used by this race to ensure new names are unique."),
 });
 
 const AdvanceTimeAndGenerateNarrativeEventsInputSchema = z.object({
@@ -218,7 +219,7 @@ The Creator's guidance for this era: {{#if chronicleEntry}}"{{chronicleEntry}}"{
 {{#if boonDirectives}}
 ACTIVE CREATOR DIRECTIVES:
 {{#each boonDirectives}}
-  - Directive {{id}} (Type: {{boonId}}): Targets [{{#each targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}] - Content: "{{content}}"
+  - Directive {{this.id}} (Type: {{this.boonId}}): Targets [{{#each this.targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}] - Content: "{{this.content}}"
 {{/each}}
 {{/if}}
 
@@ -302,7 +303,7 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
         * **Max 4 Rule:** If a race has 4 living characters, FORBIDDEN from generating a new one.
         * **Last Spark Rule:** If a race has 0 living characters, you MUST generate 1 new character.
         * Base emergence on narrative triggers (hardship, talent, boons).
-        * If a character emerges, populate 'newCharacter'. The character's 'name' **MUST** be generated using the NAMING PROFILE. The name must be simple (one or two phonemes) and not a repeat. The 'firstLogEntry' MUST be an emotional thought tied to their 'emergenceReason'.
+        * If a character emerges, populate 'newCharacter'. The character's 'name' **MUST** be generated using the NAMING PROFILE. The 'firstLogEntry' MUST be an emotional thought tied to their 'emergenceReason'.
 7.  **FINAL SUMMARY:**
     * When you write the main 'summary', you MUST include the total 'died' statistic (e.g., "...claimed 31 lives...").
     * You MUST also mention by name **one or two** of the most significant deaths you just generated (from 'fallenNotableCharacters' or 'namedCommonerDeaths').
@@ -310,7 +311,7 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
 8.  **TARGETED DIRECTIVES (MANDATORY):**
 You must check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If directives exist for the race you are simulating, you MUST execute them by interpreting the 'boonId' and 'content' for the specified 'targets'. For example:
 {{#each boonDirectives}}
-  - **Directive for {{boonId}}:** Targets {{#each targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}. Content: "{{content}}". You MUST implement this.
+  - **Directive for {{this.boonId}}:** Targets {{#each this.targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}. Content: "{{this.content}}". You MUST implement this.
 {{/each}}
 
 
@@ -339,7 +340,7 @@ You must check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If directive
     * The outcome of the First Contact **MUST** be logical. Base it on the traits of *both* races (e.g., "Hardy, Industrious" meeting "Mystical, Xenophobic" will be tense).
     * The races now share 'knownTiles' for all adjacent territories.
 12. **NAMING CONVENTION (CRITICAL):**
-    When you are required to generate a name for a 'newCharacter' or a 'namedCommonerDeath', you MUST use the provided 'namingProfile' for that race. The names must be unique and consistent with the cultural and linguistic rules described in the profile.
+    When you are required to generate a name for a 'newCharacter' or a 'namedCommonerDeath', you MUST use the provided 'namingProfile' for that race. The names must be unique and consistent with the cultural and linguistic rules described in the profile. **YOU MUST NOT REPEAT ANY NAME FROM THE 'existingNames' LIST.**
 
 Your final output MUST be a single JSON object matching the defined output schema, containing a 'newYear' and an array of 'raceResults'.
 
@@ -347,7 +348,7 @@ The Creator's guidance for this era: {{#if chronicleEntry}}"{{chronicleEntry}}"{
 {{#if boonDirectives}}
 ACTIVE CREATOR DIRECTIVES:
 {{#each boonDirectives}}
-  - Directive {{id}} (Type: {{boonId}}): Targets [{{#each targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}] - Content: "{{content}}"
+  - Directive {{this.id}} (Type: {{this.boonId}}): Targets [{{#each this.targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}] - Content: "{{this.content}}"
 {{/each}}
 {{/if}}
 `,
@@ -410,3 +411,5 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
+
+    
