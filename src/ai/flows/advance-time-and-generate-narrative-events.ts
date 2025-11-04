@@ -141,12 +141,13 @@ export type AdvanceTimeAndGenerateNarrativeEventsInput = z.infer<typeof AdvanceT
 
 const RaceSimulationResultSchema = z.object({
     raceId: z.string().describe("The ID of the race that was simulated."),
-    narrative: z.string().describe("A compelling, 3-5 paragraph narrative in a 'historian' voice. This is the main story of the era. It MUST weave together the most important events, character actions (from new characters or log entries), and significant deaths (from fallenNotableCharacters). It should be immersive and at least 150 words long."),
+    narrative: z.string().describe("A compact, 2-paragraph narrative in a 'historian' voice. This is the main story of the era. It MUST weave together the most important events, character actions, and significant deaths. It should be immersive."),
     populationChange: z.object({
         born: z.number().describe("Number of births during this period."),
         died: z.number().describe("Number of deaths during this period."),
         newPopulation: z.number().describe("The final population after births and deaths.")
     }),
+    events: z.array(z.string()).describe("A bullet-point list of key notable events that occurred this era. This is separate from the main narrative."),
     emergenceReason: z.string().optional().describe("If a new character emerged, a description of why they emerged. This is tied to their backstory."),
     updatedProblems: z.array(ProblemSchema).describe('The updated list of all active problems after the simulation for this race.'),
     newCharacter: NewCharacterSchema.optional().describe("The full data for a new notable character, if one emerged this era for this race."),
@@ -298,15 +299,14 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
         *   **Last Spark Rule:** If a race has 0 living characters, you MUST generate 1 new character.
         *   Base emergence on narrative triggers (hardship, talent, boons).
         *   If a character emerges, populate 'newCharacter'. The character's 'name' **MUST** be generated using the NAMING PROFILE. The 'firstLogEntry' MUST be an emotional thought tied to their 'emergenceReason'.
-7.  **THE IMMERSIVE NARRATIVE (MANDATORY):**
-    *   You **MUST** generate a 'narrative' field. This is the main story of the era, written in a 3rd-person "historian" voice.
-    *   It **MUST** be compelling, detailed, and at least 3-5 paragraphs long (minimum 150 words).
-    *   **Crucially, you MUST weave all major occurrences into this single story.** This includes:
-        *   **Notable Events:** The "First Contact," the "Discovery of Fire," a "Great Famine," etc.
+
+7.  **THE IMMERSIVE NARRATIVE & EVENTS (MANDATORY):**
+    *   You **MUST** generate a 'narrative' field. This is the main story of the era, written in a 3rd-person "historian" voice. It must be a compact, 2-paragraph story.
+    *   You **MUST** generate an 'events' field. This is a bullet-point list of the key events of the era.
+    *   **Crucially, you MUST weave all major occurrences into the narrative.** This includes:
         *   **Character Actions:** Mention *by name* what notable characters (from 'livingCharacters') did, as reflected in the 'characterLogEntries' you are generating. (e.g., "While the tribe starved, the hunter *Grak* wrote of his desperate, lonely hunts...").
         *   **Significant Deaths:** You MUST mention by name one or two of the most significant deaths (from 'fallenNotableCharacters' or 'namedCommonerDeaths') and tie their death to the era's events.
         *   **Context:** The narrative MUST be consistent with the race's 'traits', 'problems', and 'technologies'.
-    *   **This 'narrative' field REPLACES the old 'summary' and 'events' list.**
     
 8.  **TARGETED DIRECTIVES (MANDATORY):**
     *   You MUST check the 'boonDirectives' list FOR THE CURRENT RACE. If a directive exists, you MUST execute it.
@@ -314,7 +314,7 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     *   You MUST interpret the directive's 'boonId' and 'content' to generate a corresponding event and narrate it in the 'narrative'.
 
 9.  **ACHIEVEMENT GENERATION (MANDATORY):**
-    You must review the **major events described in your 'narrative'**. If a major, "first-time" milestone occurred, you **MUST** generate a 'newAchievement' object for it.
+    You must review the **major events in your 'events' list**. If a major, "first-time" milestone occurred, you **MUST** generate a 'newAchievement' object for it.
     *   "The Gift of Fire" (Discovery of fire): 50 RP
     *   "First Tamed Beast" (First domesticated animal): 75 RP
     *   "The Elder's Accord" (First formal government): 100 RP
@@ -371,6 +371,7 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
             return {
                 ...result,
                 narrative: result.narrative || "Time passed uneventfully for this race.",
+                events: result.events || [],
                 populationChange: result.populationChange || { born: 0, died: 0, newPopulation: race.population },
                 updatedProblems: result.updatedProblems || race.problems || [],
                 characterLogEntries: result.characterLogEntries || [],
@@ -384,6 +385,7 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
         return {
             raceId: race.id,
             narrative: "Time passed uneventfully for this race.",
+            events: [],
             populationChange: { born: 0, died: 0, newPopulation: race.population },
             updatedProblems: race.problems || [],
             characterLogEntries: [],
@@ -410,9 +412,3 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
-
-    
-
-    
-
-    

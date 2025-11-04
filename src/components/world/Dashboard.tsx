@@ -194,11 +194,12 @@ export default function Dashboard({ worldId }: { worldId: string }) {
           const raceResult = raceResults.find(res => res.raceId === originalRace.id);
           if (!raceResult) return originalRace;
 
-          const { narrative, populationChange, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry, newGovernment, newReligion, newPoliticLogEntry, newAchievements, updatedOccupiedTiles, updatedKnownTiles, newTechnologies, newSettlement } = raceResult;
+          const { narrative, events, populationChange, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry, newGovernment, newReligion, newPoliticLogEntry, newAchievements, updatedOccupiedTiles, updatedKnownTiles, newTechnologies, newSettlement } = raceResult;
 
           const newHistoryEntry: HistoryEntry = {
               year: newYear,
               narrative,
+              events,
               populationChange,
               emergenceReason,
           };
@@ -503,5 +504,3 @@ function DashboardSkeleton() {
     </div>
   );
 }
-
-    

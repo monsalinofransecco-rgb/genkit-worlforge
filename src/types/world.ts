@@ -1,8 +1,4 @@
 
-
-
-
-
 export type BoonId = 'fertility' | 'strength' | 'wisdom' | 'resilience';
 
 export interface Boon {
@@ -70,6 +66,7 @@ export interface PopulationChange {
 export interface HistoryEntry {
     year: number;
     narrative: string;
+    events: string[];
     populationChange: PopulationChange;
     emergenceReason?: string;
 }
@@ -151,5 +148,3 @@ export interface World {
   narrativeLog: NarrativeEntry[];
   boonDirectives?: BoonDirective[];
 }
-
-    

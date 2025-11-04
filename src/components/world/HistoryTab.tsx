@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import type { Race, NotableCharacter, PersonalLogEntry } from '@/types/world';
-import { BookText, Calendar, TrendingDown, TrendingUp, Users, UserPlus, BookOpen } from 'lucide-react';
+import { BookText, Calendar, TrendingDown, TrendingUp, Users, UserPlus, BookOpen, ListTree } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 
@@ -64,9 +64,20 @@ export function HistoryTab({ race }: TabProps) {
                          </div>
                       </div>
 
+                      {/* Events */}
+                       {(entry.events && entry.events.length > 0) && (
+                        <div className="mb-4 p-3 rounded-md bg-card-foreground/5 border-l-4 border-accent">
+                            <h4 className="font-semibold flex items-center gap-2 mb-2"><ListTree className="h-4 w-4" />Notable Events</h4>
+                            <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+                                {entry.events.map((event, i) => <li key={i}>{event}</li>)}
+                            </ul>
+                        </div>
+                       )}
+
+
                        {/* Character Emergence */}
                       {entry.emergenceReason && (
-                        <div className="mb-4 p-3 rounded-md bg-card border-l-4 border-accent">
+                        <div className="mb-4 p-3 rounded-md bg-card-foreground/5">
                           <h4 className="font-semibold flex items-center gap-2 mb-1"><UserPlus className="h-4 w-4" />Character Emergence</h4>
                           <p className="text-sm text-muted-foreground">{entry.emergenceReason}</p>
                         </div>
@@ -88,5 +99,3 @@ export function HistoryTab({ race }: TabProps) {
     </Card>
   );
 }
-
-    
