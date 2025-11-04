@@ -8,10 +8,9 @@ import {
   CardTitle,
   CardDescription
 } from '@/components/ui/card';
-import type { Race } from '@/types/world';
+import type { Race, World } from '@/types/world';
 import {
   Users,
-  BookOpen,
   Gem,
   Landmark,
   Sparkles,
@@ -19,11 +18,13 @@ import {
   ShieldQuestion,
   Ship,
   MountainIcon,
+  BookUp,
+  Wind,
 } from 'lucide-react';
 import { ProblemsTab } from './ProblemsTab';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { creatorStoreBoons } from '@/data/boons';
 
 function StatCard({
   title,
@@ -44,7 +45,7 @@ function StatCard({
         {icon}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-2xl font-bold truncate">{value}</div>
       </CardContent>
     </Card>
   )
@@ -68,9 +69,10 @@ function StatCard({
 
 type TabProps = {
   race: Race;
+  world: World;
 };
 
-export function OverviewTab({ race }: TabProps) {
+export function OverviewTab({ race, world }: TabProps) {
 
   const populationPopover = (
     <div className='grid gap-4'>
@@ -128,6 +130,9 @@ export function OverviewTab({ race }: TabProps) {
     </div>
   )
 
+  const pendingDirectives = (world.boonDirectives || []).filter(d => d.raceId === race.id);
+  const lastChronicleEntry = world.narrativeLog.filter(e => e.type === 'user').pop();
+
 
   return (
     <div className="space-y-6">
@@ -139,6 +144,38 @@ export function OverviewTab({ race }: TabProps) {
             <StatCard title="Government" value={race.government.name} icon={<Landmark className="text-muted-foreground" />} popoverContent={governmentPopover} />
             <StatCard title="Territory" value={`${race.occupiedTiles.length} Tiles`} icon={<MapPin className="text-muted-foreground" />} />
         </div>
+        
+        {(race.activeBoons.length > 0 || pendingDirectives.length > 0) && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Wind /> Divine Interventions</CardTitle>
+                    <CardDescription>Active and pending boons for the next simulation cycle.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-2">
+                    {race.activeBoons.map(boonId => {
+                        const boon = creatorStoreBoons.find(b => b.id === boonId);
+                        return boon ? <Badge key={boonId} variant="default">{boon.name}</Badge> : null;
+                    })}
+                    {pendingDirectives.map(directive => {
+                         const boon = creatorStoreBoons.find(b => b.id === directive.boonId);
+                         return boon ? <Badge key={directive.id} variant="secondary">Pending: {boon.name}</Badge> : null;
+                    })}
+                </CardContent>
+            </Card>
+        )}
+
+        {lastChronicleEntry && (
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><BookUp /> Chronicler's Notes</CardTitle>
+                    <CardDescription>The latest guidance provided by you, The Creator, for the coming era.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className='text-sm italic text-muted-foreground'>"{world.significantEvents[world.significantEvents.length - 1]}"</p>
+                </CardContent>
+            </Card>
+        )}
+
         <Card>
             <CardHeader>
                 <CardTitle>Technologies</CardTitle>

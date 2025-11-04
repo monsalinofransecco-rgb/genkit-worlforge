@@ -400,7 +400,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                         <TabsTrigger value="graveyard"><Skull className="mr-2 h-4 w-4" />Graveyard</TabsTrigger>
                     </TabsList>
                     <TabsContent value="overview" className="pt-6">
-                        <OverviewTab race={race} />
+                        <OverviewTab race={race} world={world} />
                     </TabsContent>
                     <TabsContent value="characters" className="pt-6">
                         <CharactersTab race={race} setWorld={updateWorld} isLoading={isLoading} setIsLoading={setIsLoading} />
@@ -466,5 +466,3 @@ function DashboardSkeleton() {
     </div>
   );
 }
-
-    
