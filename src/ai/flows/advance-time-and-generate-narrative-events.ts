@@ -210,7 +210,7 @@ The Creator's guidance for this era: {{#if chronicleEntry}}"{{chronicleEntry}}"{
 {{#if boonDirectives}}
 ACTIVE CREATOR DIRECTIVES:
 {{#each boonDirectives}}
-  - Directive {{id}} (Type: {{boonId}}): Targets [{{join targets ", "}}] - Content: "{{content}}"
+  - Directive {{id}} (Type: {{boonId}}): Targets [{{#each targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}] - Content: "{{content}}"
 {{/each}}
 {{/if}}
 
@@ -219,7 +219,7 @@ RACES TO SIMULATE:
 {{#each races}}
 - Race: {{name}} (ID: {{id}})
   - Traits: {{traits}}
-  - Occupied Tiles: {{join occupiedTiles ", "}}
+  - Occupied Tiles: {{#each occupiedTiles}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
   - Population: {{population}}
   - Culture: {{culture.name}}
   - Government: {{government.name}}
@@ -232,7 +232,7 @@ RACES TO SIMULATE:
 THE WORLD MAP:
 The world is a grid. Here are all the tiles you need to know about:
 {{#each worldMap}}
-- Tile {{id}} ({{biome}}): Contains [{{join resources ", "}}]
+- Tile {{id}} ({{biome}}): Contains [{{#each resources}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}]
 {{/each}}
 
 FOR EACH RACE, FOLLOW THESE DIRECTIVES:
@@ -356,7 +356,7 @@ The Creator's guidance for this era: {{#if chronicleEntry}}"{{chronicleEntry}}"{
 {{#if boonDirectives}}
 ACTIVE CREATOR DIRECTIVES:
 {{#each boonDirectives}}
-  - Directive {{id}} (Type: {{boonId}}): Targets [{{join targets ", "}}] - Content: "{{content}}"
+  - Directive {{id}} (Type: {{boonId}}): Targets [{{#each targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}] - Content: "{{content}}"
 {{/each}}
 {{/if}}
 `,
@@ -419,5 +419,7 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
+
+    
 
     
