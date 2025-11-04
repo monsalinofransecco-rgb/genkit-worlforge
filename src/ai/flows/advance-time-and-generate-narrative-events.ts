@@ -312,7 +312,9 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     *   **Memorialize:** The summary MUST also mention by name **one or two** of the most significant deaths you just generated (from 'fallenNotableCharacters' or 'namedCommonerDeaths').
     
 8.  **TARGETED DIRECTIVES (MANDATORY):**
-You must check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If directives exist for the race you are simulating, you MUST execute them by interpreting the 'boonId' and 'content' for the specified 'targets'.
+    *   You MUST check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If a directive exists for the race you are currently simulating, you MUST execute it.
+    *   **Execution Rule:** When a directive has a 'target' character ID, you MUST find that character in the 'livingCharacters' list for the race. The resulting event or summary MUST use that character's name and title. **DO NOT invent a new character name for a targeted directive.** For example, if a directive targets character 'ID-123' whose name is 'Kaelen', your output MUST say 'Kaelen received a dream', NOT 'A chieftain received a dream'.
+    *   You MUST interpret the directive's 'boonId' and 'content' to generate a corresponding 'event' and narrate it in the 'summary'.
 
 9.  **ACHIEVEMENT GENERATION (MANDATORY):**
     You must review this race's 'events' list that you just generated. If a major, "first-time" milestone occurred, you **MUST** generate a 'newAchievement' object for it.
