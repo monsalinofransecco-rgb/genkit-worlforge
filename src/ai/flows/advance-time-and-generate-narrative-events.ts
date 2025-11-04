@@ -309,10 +309,10 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     {{#if boonDirectives}}
       {{#each boonDirectives}}
         {{#if (eq boonId 'appear_in_dreams')}}
-        - **Directive Active: Appear in Dreams.** You **MUST** make the character with ID '{{targets.0}}' have a dream. The message is: '{{content}}'. You **MUST** generate a \`personalLogEntry\` for them reacting to this.
+        - **Directive Active: Appear in Dreams.** You **MUST** make the character with ID '{{targets.[0]}}' have a dream. The message is: '{{content}}'. You **MUST** generate a \`personalLogEntry\` for them reacting to this.
         {{/if}}
         {{#if (eq boonId 'whisper_of_attraction')}}
-        - **Directive Active: Whisper of Attraction.** You **MUST** create a \`notableEvent\` that forces '{{targets.0}}' and '{{targets.1}}' to interact, with the goal of fostering '{{content}}'. Their \`personalLogEntries\` must reflect this.
+        - **Directive Active: Whisper of Attraction.** You **MUST** create a \`notableEvent\` that forces '{{targets.[0]}}' and '{{targets.[1]}}' to interact, with the goal of fostering '{{content}}'. Their \`personalLogEntries\` must reflect this.
         {{/if}}
         {{#if (eq boonId 'possess_animal')}}
         - **Directive Active: Possess Animal.** The Creator is possessing an animal. Their goal is: '{{content}}'. You **MUST** generate a \`notableEvent\` where a "strangely intelligent" animal's action nudges the race toward this goal.
@@ -419,3 +419,5 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
+
+    
