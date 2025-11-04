@@ -40,12 +40,7 @@ const raceSchema = z.object({
     .min(1, 'List at least one common trait.'),
   specialTraits: z
     .string()
-    .optional()
-    .refine(
-      (value) =>
-        !value || value.split(',').filter((t) => t.trim()).length <= 3,
-      'You can enter a maximum of 3 special traits.'
-    ),
+    .optional(),
   location: z.string().min(5, 'Describe their starting location.'),
   population: z.number().int().min(100).max(5000).default(1000),
 });
@@ -259,7 +254,7 @@ export default function PopulateRacesPage({
                             name={`races.${index}.racialTraits`}
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Racial Traits (Max 5, comma-separated)</FormLabel>
+                                <FormLabel>Racial Traits (comma-separated)</FormLabel>
                                 <FormControl>
                                     <Input
                                     placeholder="e.g., Hardy, Industrious, Stubborn"
@@ -275,7 +270,7 @@ export default function PopulateRacesPage({
                             name={`races.${index}.specialTraits`}
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Special Traits (Max 3, comma-separated)</FormLabel>
+                                <FormLabel>Special Traits (comma-separated)</FormLabel>
                                 <FormControl>
                                     <Input
                                     placeholder="e.g., Fire Resistance, Night Vision"
