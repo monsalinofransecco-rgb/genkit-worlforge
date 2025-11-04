@@ -1,6 +1,7 @@
 
 
 
+
 export type BoonId = 'fertility' | 'strength' | 'wisdom' | 'resilience';
 
 export interface Boon {

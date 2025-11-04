@@ -36,7 +36,8 @@ import { OverviewTab } from './OverviewTab';
 import { HistoryTab } from './HistoryTab';
 import { BoonModal } from '../BoonModal';
 import { Boon, creatorStoreBoons } from '@/data/boons';
-import { worldMap } from '@/data/worldMap';
+import { worldMap, getAdjacentTileIds } from '@/data/worldMap';
+import type { MapTile } from '@/data/worldMap';
 
 
 export default function Dashboard({ worldId }: { worldId: string }) {
@@ -126,6 +127,13 @@ export default function Dashboard({ worldId }: { worldId: string }) {
     if (!world) return;
     setIsLoading(true);
 
+    const allRaceLocations = new Map<string, string>(); // Map<tileId, raceId>
+    for (const r of world.races) {
+      for (const tileId of r.occupiedTiles) {
+        allRaceLocations.set(tileId, r.id);
+      }
+    }
+
     const raceInputs = world.races.map(race => {
         const boons: Record<string, boolean> = {};
         (race.activeBoons || []).forEach(boonId => {
@@ -135,6 +143,16 @@ export default function Dashboard({ worldId }: { worldId: string }) {
         const existingNames = race.notableCharacters.map(c => c.name);
 
         const raceDirectives = (world.boonDirectives || []).filter(d => d.raceId === race.id);
+
+        const hydratedKnownTiles = race.knownTiles.map(tileId => {
+          const tileData = map.find(t => t.id === tileId);
+          if (!tileData) return null;
+
+          const occupantId = allRaceLocations.get(tileId);
+          const occupant = (occupantId && occupantId !== race.id) ? world.races.find(r => r.id === occupantId)?.name : undefined;
+
+          return { ...tileData, occupant };
+        }).filter(Boolean) as (MapTile & { occupant?: string })[];
 
         return {
             id: race.id,
@@ -149,8 +167,8 @@ export default function Dashboard({ worldId }: { worldId: string }) {
             boons: boons,
             namingProfile: race.namingProfile,
             occupiedTiles: race.occupiedTiles,
-            knownTiles: race.knownTiles,
-            technologies: race.technologies,
+            knownTiles: hydratedKnownTiles,
+            technologies: race.technologies || [],
             existingNames,
             boonDirectives: raceDirectives,
         }
@@ -163,7 +181,6 @@ export default function Dashboard({ worldId }: { worldId: string }) {
       currentYear: world.currentYear,
       races: raceInputs,
       chronicleEntry: world.significantEvents[world.significantEvents.length-1],
-      worldMap: map,
     });
     setIsLoading(false);
 
@@ -171,11 +188,13 @@ export default function Dashboard({ worldId }: { worldId: string }) {
       const { data } = result;
       const { newYear, raceResults } = data;
 
-      let updatedRaces = world.races.map(originalRace => {
+      let updatedWorld = { ...world };
+
+      let updatedRaces = updatedWorld.races.map(originalRace => {
           const raceResult = raceResults.find(res => res.raceId === originalRace.id);
           if (!raceResult) return originalRace;
 
-          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry, newGovernment, newReligion, newPoliticLogEntry, newAchievements, updatedOccupiedTiles, updatedKnownTiles, newTechnologies, newSettlement } = raceResult;
+          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry, newGovernment, newReligion, newPoliticLogEntry, newAchievements, newlyOccupiedTiles, newlyKnownTiles, newTechnologies, newSettlement } = raceResult;
 
           const newHistoryEntry: HistoryEntry = {
               year: newYear,
@@ -187,7 +206,6 @@ export default function Dashboard({ worldId }: { worldId: string }) {
 
           let updatedCharacters = [...originalRace.notableCharacters];
 
-          // Process notable deaths
           (fallenNotableCharacters || []).forEach(fallen => {
               const charIndex = updatedCharacters.findIndex(c => c.id === fallen.characterId);
               if (charIndex !== -1) {
@@ -197,7 +215,6 @@ export default function Dashboard({ worldId }: { worldId: string }) {
               }
           });
 
-          // Process commoner deaths
           (namedCommonerDeaths || []).forEach(commoner => {
               const newDeadCharacter: NotableCharacter = {
                   id: crypto.randomUUID(),
@@ -219,7 +236,6 @@ export default function Dashboard({ worldId }: { worldId: string }) {
               updatedCharacters.push(newDeadCharacter);
           });
           
-          // Add new character if one emerged
           if (newCharacter) {
               const fullNewCharacter: NotableCharacter = {
                   ...newCharacter,
@@ -230,7 +246,6 @@ export default function Dashboard({ worldId }: { worldId: string }) {
               updatedCharacters.push(fullNewCharacter);
           }
 
-          // Add new personal log entries to existing characters
           characterLogEntries.forEach(log => {
               const charIndex = updatedCharacters.findIndex(c => c.id === log.characterId && c.status === 'alive');
               if (charIndex > -1) {
@@ -238,54 +253,40 @@ export default function Dashboard({ worldId }: { worldId: string }) {
               }
           });
 
-          // Update age of all living characters
           updatedCharacters.forEach(char => {
               if (char.status === 'alive') {
                   char.age += years;
               }
           });
           
-          let updatedCulture = originalRace.culture;
-          if (newCulture) {
-              updatedCulture = newCulture;
-          }
-
           let updatedCultureLog = originalRace.cultureLog || [];
           if (newCultureLogEntry) {
               updatedCultureLog.push({ ...newCultureLogEntry, year: newYear });
           }
           
-          let updatedGovernment = originalRace.government;
-            if (newGovernment) {
-                updatedGovernment = newGovernment;
-            }
-
-            let updatedReligion = originalRace.religion;
-            if (newReligion) {
-                updatedReligion = newReligion;
-            }
-
-            let updatedPoliticalLog = originalRace.politicalLog || [];
-            if (newPoliticLogEntry) {
-                updatedPoliticalLog.push({ ...newPoliticLogEntry, year: newYear });
-            }
-
-            let updatedNamingProfile = originalRace.namingProfile;
-            if (updatedNamingProfile) {
-                const newNames = [
-                    ...(newCharacter ? [newCharacter.name] : []),
-                    ...(namedCommonerDeaths || []).map(d => d.name)
-                ];
-            }
+          let updatedPoliticalLog = originalRace.politicalLog || [];
+          if (newPoliticLogEntry) {
+              updatedPoliticalLog.push({ ...newPoliticLogEntry, year: newYear });
+          }
             
-            let updatedRacePoints = originalRace.racePoints;
-            (newAchievements || []).forEach(ach => {
-                updatedRacePoints += ach.rpAward;
-                toast({
-                    title: "Achievement Unlocked!",
-                    description: `The ${originalRace.name} earned '${ach.title}' (+${ach.rpAward} RP)`
-                })
-            });
+          let updatedRacePoints = originalRace.racePoints;
+          (newAchievements || []).forEach(ach => {
+              updatedRacePoints += ach.rpAward;
+              toast({
+                  title: "Achievement Unlocked!",
+                  description: `The ${originalRace.name} earned '${ach.title}' (+${ach.rpAward} RP)`
+              })
+          });
+
+          const knownTilesSet = new Set(originalRace.knownTiles);
+          (newlyOccupiedTiles || []).forEach(tileId => {
+              if (!originalRace.occupiedTiles.includes(tileId)) {
+                  originalRace.occupiedTiles.push(tileId);
+              }
+              knownTilesSet.add(tileId);
+              getAdjacentTileIds(tileId).forEach(id => knownTilesSet.add(id));
+          });
+          (newlyKnownTiles || []).forEach(id => knownTilesSet.add(id));
 
           return {
               ...originalRace,
@@ -293,23 +294,21 @@ export default function Dashboard({ worldId }: { worldId: string }) {
               problems: updatedProblems || originalRace.problems,
               notableCharacters: updatedCharacters,
               history: [...originalRace.history, newHistoryEntry],
-              culture: updatedCulture,
+              culture: newCulture || originalRace.culture,
               cultureLog: updatedCultureLog,
-              government: updatedGovernment,
-              religion: updatedReligion,
+              government: newGovernment || originalRace.government,
+              religion: newReligion || originalRace.religion,
               politicalLog: updatedPoliticalLog,
-              namingProfile: updatedNamingProfile,
               racePoints: updatedRacePoints,
-              occupiedTiles: updatedOccupiedTiles,
-              knownTiles: updatedKnownTiles,
-              technologies: [...originalRace.technologies, ...(newTechnologies || [])],
+              occupiedTiles: newlyOccupiedTiles ? [...originalRace.occupiedTiles, ...newlyOccupiedTiles] : originalRace.occupiedTiles,
+              knownTiles: Array.from(knownTilesSet),
+              technologies: newTechnologies ? [...originalRace.technologies, ...newTechnologies] : originalRace.technologies,
               settlement: newSettlement || originalRace.settlement,
           };
       });
 
       const totalPopulation = updatedRaces.reduce((sum, r) => sum + r.population, 0);
 
-       // Post-simulation cleanup
        updatedRaces = updatedRaces.map(race => {
         const permanentBoons = (race.activeBoons || []).filter(boonId => {
           const boonDetails = creatorStoreBoons.find(b => b.id === boonId);
@@ -324,8 +323,8 @@ export default function Dashboard({ worldId }: { worldId: string }) {
         currentYear: newYear,
         races: updatedRaces,
         population: totalPopulation,
-        boonDirectives: [], // Clear directives after they've been processed
-        narrativeLog: [...world.narrativeLog], // Can be updated with a world-level summary if needed
+        boonDirectives: [], 
+        narrativeLog: [...world.narrativeLog], 
       });
 
       toast({
@@ -505,5 +504,3 @@ function DashboardSkeleton() {
     </div>
   );
 }
-
-    

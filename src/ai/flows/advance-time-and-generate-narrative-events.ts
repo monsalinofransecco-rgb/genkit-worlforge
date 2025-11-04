@@ -81,6 +81,7 @@ const AchievementSchema = z.object({
   
   const BoonDirectiveSchema = z.object({
     id: z.string().describe("A unique ID for this directive."),
+    raceId: z.string(),
     boonId: z.string().describe("e.g., 'appear_in_dreams'"),
     targets: z.array(z.string()).describe("e.g., ['CharacterID-1'] or ['CharacterID-1', 'CharacterID-2']"),
     content: z.string().describe("e.g., 'The mountain will bleed...'")
@@ -92,6 +93,7 @@ const MapTileSchema = z.object({
     y: z.number(),
     biome: z.string(),
     resources: z.array(z.string()),
+    occupant: z.string().optional().describe("The ID of another race occupying this tile, if any."),
 });
 
 // Schemas for the main flow
@@ -120,7 +122,7 @@ const RaceSimulationInputSchema = z.object({
     problems: z.array(ProblemSchema).optional().describe('A list of current problems the race is facing.'),
     boons: z.record(z.boolean()).describe("An object with boon IDs as keys and true/false as values, e.g., { 'fertility': true }."),
     occupiedTiles: z.array(z.string()),
-    knownTiles: z.array(z.string()),
+    knownTiles: z.array(MapTileSchema),
     technologies: z.array(z.string()),
     namingProfile: NamingProfileSchema.optional(),
     existingNames: z.array(z.string()).describe("A list of all names currently or previously used by this race to ensure new names are unique."),
@@ -134,7 +136,6 @@ const AdvanceTimeAndGenerateNarrativeEventsInputSchema = z.object({
   currentYear: z.number().describe('The current year in the world.'),
   races: z.array(RaceSimulationInputSchema).describe("An array of all races to be simulated."),
   chronicleEntry: z.string().optional().describe('The latest user-written chronicle entry to influence events.'),
-  worldMap: z.array(MapTileSchema).describe("The complete world map grid."),
 });
 export type AdvanceTimeAndGenerateNarrativeEventsInput = z.infer<typeof AdvanceTimeAndGenerateNarrativeEventsInputSchema>;
 
@@ -183,7 +184,7 @@ const prompt = ai.definePrompt({
 ---
 **MANDATORY PERSONA & CONTEXT**
 ---
-You are a 'Primal Era' Simulator. The race you are simulating is in the **{{{era}}}**. Their status is 'Emerging.'
+You are a 'Primal Era' Simulator. The race you are simulating is in the '{{{era}}}'. Their status is 'Emerging.'
 
 **THIS IS YOUR MOST IMPORTANT RULE:**
 Your worldview, logic, and narrative **MUST** be **PRIMEVAL, SIMPLE, and SUPERSTITIOUS.**
@@ -222,6 +223,11 @@ RACES TO SIMULATE:
 - Race: {{name}} (ID: {{id}})
   - Traits: {{traits}}
   - Occupied Tiles: {{#each occupiedTiles}}'{{this}}'{{#unless @last}}, {{/unless}}{{/each}}
+  - Technologies: [{{#each technologies}}'{{this}}'{{#unless @last}}, {{/unless}}{{/each}}]
+  - KNOWN TILES (Their "Fog of War"):
+    {{#each knownTiles}}
+    - Tile {{id}} ({{biome}}): {{#if occupant}}Occupied by {{occupant}}{{else}}Unoccupied{{/if}}
+    {{/each}}
   - Population: {{population}}
   - Culture: {{culture.name}}
   - Government: {{government.name}}
@@ -232,11 +238,6 @@ RACES TO SIMULATE:
   - Creator Directives for this race: {{#if boonDirectives}}{{boonDirectives.length}}{{else}}0{{/if}}
 {{/each}}
 
-THE WORLD MAP:
-The world is a grid. Here are all the tiles you need to know about:
-{{#each worldMap}}
-- Tile {{id}} ({{biome}}): Contains [{{#each resources}}'{{this}}'{{#unless @last}}, {{/unless}}{{/each}}]
-{{/each}}
 
 FOR EACH RACE, FOLLOW THESE DIRECTIVES:
 
@@ -398,10 +399,3 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
-
-    
-
-    
-
-    
-
