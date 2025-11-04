@@ -370,13 +370,14 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
         if (result) {
             return {
                 ...result,
+                narrative: result.narrative || "Time passed uneventfully for this race.",
                 populationChange: result.populationChange || { born: 0, died: 0, newPopulation: race.population },
                 updatedProblems: result.updatedProblems || race.problems || [],
                 characterLogEntries: result.characterLogEntries || [],
                 fallenNotableCharacters: result.fallenNotableCharacters || [],
                 namedCommonerDeaths: result.namedCommonerDeaths || [],
                 updatedOccupiedTiles: result.updatedOccupiedTiles || race.occupiedTiles,
-                updatedKnownTiles: result.updatedKnownTiles || race.knownTiles,
+                updatedKnownTiles: result.updatedKnownTiles || race.knownTiles.map(t => t.id),
                 newTechnologies: result.newTechnologies || [],
             };
         }
@@ -389,8 +390,17 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
             fallenNotableCharacters: [],
             namedCommonerDeaths: [],
             updatedOccupiedTiles: race.occupiedTiles,
-            updatedKnownTiles: race.knownTiles,
+            updatedKnownTiles: race.knownTiles.map(t => t.id),
             newTechnologies: [],
+            newAchievements: [],
+            newCulture: undefined,
+            newCultureLogEntry: undefined,
+            newGovernment: undefined,
+            newReligion: undefined,
+            newPoliticLogEntry: undefined,
+            newCharacter: undefined,
+            emergenceReason: undefined,
+            newSettlement: undefined
         };
     });
     
@@ -400,6 +410,8 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
+
+    
 
     
 
