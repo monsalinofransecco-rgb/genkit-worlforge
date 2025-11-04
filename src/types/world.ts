@@ -1,5 +1,6 @@
 
 
+
 export type BoonId = 'fertility' | 'strength' | 'wisdom' | 'resilience';
 
 export interface Boon {
@@ -13,11 +14,9 @@ export interface Boon {
 }
 
 export interface NamingProfile {
-  languageName: string;
+  phonemes: string;
   inspiration: string;
-  phonemes: string[];
-  structure: string;
-  exampleNames: string[];
+  languageStructure: string;
 }
 
 export interface Problem {

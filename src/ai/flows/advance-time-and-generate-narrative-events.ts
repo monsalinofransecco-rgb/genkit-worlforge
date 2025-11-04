@@ -102,6 +102,12 @@ const ProblemSchema = z.object({
     severity: z.enum(['Low', 'Medium', 'High', 'Critical', 'Catastrophic']),
 });
 
+const NamingProfileSchema = z.object({
+    phonemes: z.string(),
+    inspiration: z.string(),
+    languageStructure: z.string(),
+});
+
 const RaceSimulationInputSchema = z.object({
     id: z.string(),
     name: z.string(),
@@ -116,6 +122,7 @@ const RaceSimulationInputSchema = z.object({
     occupiedTiles: z.array(z.string()),
     knownTiles: z.array(z.string()),
     technologies: z.array(z.string()),
+    namingProfile: NamingProfileSchema.optional(),
 });
 
 const AdvanceTimeAndGenerateNarrativeEventsInputSchema = z.object({
@@ -249,20 +256,20 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
 
 2.  **BOON INTEGRATION (MANDATORY):**
     You must check for active boons on the *current race you are simulating* and apply their effects.
-    {{#each races}}
-        {{#if boons.pop_boom_1}}
-        - **Boon Active: Boon of Fertility.** You MUST apply a positive bias to the \`populationChange.born\` statistic and narrate this in the \`summary\`.
-        {{/if}}
-        {{#if boons.great_leader}}
-        - **Boon Active: Boon of Heroism.** You MUST generate one \`newCharacter\`.
-        {{/if}}
-        {{#if boons.inno_burst_1}}
-        - **Boon Active: Boon of Discovery.** You MUST generate a notableEvent for a primal discovery.
-        {{/if}}
-        {{#if boons.gov_reform}}
-        - **Boon Active: Governmental Reform.** You MUST generate a \`newGovernment\` object and a \`newPoliticLogEntry\`.
-        {{/if}}
-    {{/each}}
+    
+    {{#if boons.pop_boom_1}}
+    - **Boon Active: Boon of Fertility.** You MUST apply a positive bias to the \`populationChange.born\` statistic and narrate this in the \`summary\`.
+    {{/if}}
+    {{#if boons.great_leader}}
+    - **Boon Active: Boon of Heroism.** You MUST generate one \`newCharacter\`.
+    {{/if}}
+    {{#if boons.inno_burst_1}}
+    - **Boon Active: Boon of Discovery.** You MUST generate a notableEvent for a primal discovery.
+    {{/if}}
+    {{#if boons.gov_reform}}
+    - **Boon Active: Governmental Reform.** You MUST generate a \`newGovernment\` object and a \`newPoliticLogEntry\`.
+    {{/if}}
+    
 
 3.  **PROBLEM & EVENT SIMULATION:**
     * Evaluate \`chronicleEntry\` and \`activeBoons\`. If they solve a problem, resolve it in the 'summary' and REMOVE it from \`updatedProblems\`.
@@ -299,7 +306,7 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
 7.  **FINAL SUMMARY:**
     * When you write the main \`summary\`, you MUST include the total \`died\` statistic (e.g., "...claimed 31 lives...").
     * You MUST also mention by name **one or two** of the most significant deaths you just generated (from \`fallenNotableCharacters\` or \`namedCommonerDeaths\`).
-    * 
+    
 8.  **TARGETED DIRECTIVES (MANDATORY):**
 You must check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If directives exist for the race you are simulating, you MUST execute them by interpreting the 'boonId' and 'content' for the specified 'targets'. For example:
 {{#each boonDirectives}}
@@ -331,7 +338,8 @@ You must check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If directive
     * You **MUST** generate a major \`notableEvent\` for *both* races involved.
     * The outcome of the First Contact **MUST** be logical. Base it on the traits of *both* races (e.g., "Hardy, Industrious" meeting "Mystical, Xenophobic" will be tense).
     * The races now share \`knownTiles\` for all adjacent territories.
-
+12. **NAMING CONVENTION (CRITICAL):**
+    When you are required to generate a name for a `newCharacter` or a `namedCommonerDeath`, you MUST use the provided `namingProfile` for that race. The names must be unique and consistent with the cultural and linguistic rules described in the profile.
 
 Your final output MUST be a single JSON object matching the defined output schema, containing a 'newYear' and an array of 'raceResults'.
 
@@ -402,7 +410,3 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
-
-    
-
-    

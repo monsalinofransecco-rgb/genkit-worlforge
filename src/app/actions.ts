@@ -10,6 +10,10 @@ import {
   type GenerateRaceNamingProfileInput,
 } from '@/ai/flows/generate-race-naming-profile';
 import {
+  generateCharacterName,
+  type GenerateCharacterNameInput,
+} from '@/ai/flows/generate-character-name';
+import {
   simulateCataclysmEvent,
   type SimulateCataclysmEventInput,
 } from '@/ai/flows/simulate-cataclysm-events';
@@ -41,6 +45,16 @@ export async function runGenerateRaceNamingProfile(
     console.error('Error in runGenerateRaceNamingProfile:', error);
     return { success: false, error: 'Failed to generate naming profile.' };
   }
+}
+
+export async function runGenerateCharacterName(input: GenerateCharacterNameInput) {
+    try {
+        const result = await generateCharacterName(input);
+        return { success: true, data: result };
+    } catch (error) {
+        console.error('Error in runGenerateCharacterName:', error);
+        return { success: false, error: 'Failed to generate character name.' };
+    }
 }
 
 export async function runSimulateCataclysm(input: SimulateCataclysmEventInput) {
