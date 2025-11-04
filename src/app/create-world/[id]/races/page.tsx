@@ -37,7 +37,7 @@ const raceSchema = z.object({
   description: z.string().min(10, 'Describe the race.'),
   racialTraits: z
     .string()
-    .min(3, 'List at least one common trait.')
+    .min(1, 'List at least one common trait.')
     .refine(
       (value) => value.split(',').filter((t) => t.trim()).length <= 5,
       'You can enter a maximum of 5 racial traits.'
