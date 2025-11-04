@@ -126,22 +126,29 @@ export default function Dashboard({ worldId }: { worldId: string }) {
     if (!world) return;
     setIsLoading(true);
 
-    const raceInputs = world.races.map(race => ({
-        id: race.id,
-        name: race.name,
-        population: race.population,
-        traits: race.traits || "",
-        culture: race.culture,
-        government: race.government,
-        religion: race.religion,
-        livingCharacters: race.notableCharacters.filter(c => c.status === 'alive'),
-        problems: race.problems || [],
-        activeBoons: race.activeBoons || [],
-        namingProfile: race.namingProfile,
-        occupiedTiles: race.occupiedTiles,
-        knownTiles: race.knownTiles,
-        technologies: race.technologies,
-    }));
+    const raceInputs = world.races.map(race => {
+        const boons: Record<string, boolean> = {};
+        (race.activeBoons || []).forEach(boonId => {
+            boons[boonId] = true;
+        });
+
+        return {
+            id: race.id,
+            name: race.name,
+            population: race.population,
+            traits: race.traits || "",
+            culture: race.culture,
+            government: race.government,
+            religion: race.religion,
+            livingCharacters: race.notableCharacters.filter(c => c.status === 'alive'),
+            problems: race.problems || [],
+            boons: boons,
+            namingProfile: race.namingProfile,
+            occupiedTiles: race.occupiedTiles,
+            knownTiles: race.knownTiles,
+            technologies: race.technologies,
+        }
+    });
 
     const result = await runAdvanceTime({
       years,
@@ -459,3 +466,5 @@ function DashboardSkeleton() {
     </div>
   );
 }
+
+    
