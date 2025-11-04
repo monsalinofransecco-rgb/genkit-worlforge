@@ -17,13 +17,13 @@ const NamingProfileSchema = z.object({
   languageStructure: z.string(),
 });
 
-export const GenerateCharacterNameInputSchema = z.object({
+const GenerateCharacterNameInputSchema = z.object({
   namingProfile: NamingProfileSchema.describe("The linguistic and cultural rules for the race's names."),
   existingNames: z.array(z.string()).describe('A list of names already in use that cannot be repeated.'),
 });
 export type GenerateCharacterNameInput = z.infer<typeof GenerateCharacterNameInputSchema>;
 
-export const GenerateCharacterNameOutputSchema = z.object({
+const GenerateCharacterNameOutputSchema = z.object({
   name: z.string().describe('The newly generated, unique name.'),
   explanation: z.string().describe('A brief, 1-sentence explanation for why the name fits the cultural profile.'),
 });
