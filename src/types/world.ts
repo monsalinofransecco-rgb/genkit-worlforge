@@ -1,17 +1,21 @@
 export type BoonId = 'fertility' | 'strength' | 'wisdom' | 'resilience';
 
 export interface Boon {
-  id: BoonId;
+  id: string;
   name: string;
   description: string;
   cost: number;
-  icon: React.ReactNode;
+  duration: 'Next Era' | 'Permanent' | 'Single Event';
+  category: 'Intervention' | 'Survival' | 'Society' | 'Leadership';
+  targetType: 'Self' | 'OtherRace' | 'Character';
 }
 
 export interface NamingProfile {
-  phonemes: string;
+  languageName: string;
   inspiration: string;
-  languageStructure: string;
+  phonemes: string[];
+  structure: string;
+  exampleNames: string[];
 }
 
 export interface Problem {
@@ -50,6 +54,7 @@ export interface NotableCharacter {
   skills: string[];
   specialTraits: string[];
   personalLog: PersonalLogEntry[];
+  namingProfile?: NamingProfile;
 }
 
 
@@ -90,7 +95,7 @@ export interface Race {
   population: number;
   namingProfile?: NamingProfile;
   racePoints: number;
-  activeBoons: BoonId[];
+  activeBoons: string[];
   traits?: string;
   location?: string;
   problems?: Problem[];
@@ -121,6 +126,14 @@ export interface NarrativeEntry {
 
 export type WorldEra = 'Primal Era' | 'Tribal Era' | 'Classical Era';
 
+export interface BoonDirective {
+    id: string;
+    boonId: string;
+    raceId: string;
+    targets: string[];
+    content: string;
+}
+
 export interface World {
   id: string;
   name: string;
@@ -131,4 +144,5 @@ export interface World {
   significantEvents: string[];
   cataclysmPreparations: string;
   narrativeLog: NarrativeEntry[];
+  boonDirectives?: BoonDirective[];
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getWorldById, saveWorld } from '@/lib/world-store';
-import type { World, HistoryEntry, NotableCharacter, Race, DeathDetails, CultureLogEntry, DetailObject, PoliticalLogEntry } from '@/types/world';
+import type { World, HistoryEntry, NotableCharacter, Race, DeathDetails, CultureLogEntry, DetailObject, PoliticalLogEntry, BoonDirective } from '@/types/world';
 import { notFound } from 'next/navigation';
 import {
   Card,
@@ -33,6 +33,8 @@ import {
 import { InfluenceTab } from './InfluenceTab';
 import { OverviewTab } from './OverviewTab';
 import { HistoryTab } from './HistoryTab';
+import { BoonModal } from '../BoonModal';
+import { Boon } from '@/data/boons';
 
 
 export default function Dashboard({ worldId }: { worldId: string }) {
@@ -41,6 +43,11 @@ export default function Dashboard({ worldId }: { worldId: string }) {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalBoon, setModalBoon] = useState<Boon | null>(null);
+  const [boonDirectives, setBoonDirectives] = useState<BoonDirective[]>([]);
+
 
   useEffect(() => {
     setIsMounted(true);
@@ -58,12 +65,61 @@ export default function Dashboard({ worldId }: { worldId: string }) {
     saveWorld(updatedWorld);
   };
   
-  const updateRaceInWorld = (updatedRace: Race) => {
-    if (!world) return;
-    const newRaces = world.races.map(r => r.id === updatedRace.id ? updatedRace : r);
-    const newWorld = { ...world, races: newRaces };
-    updateWorld(newWorld);
+  const handleBoonPurchase = (boon: Boon) => {
+    const race = world?.races.find(r => r.id === activeRaceId);
+    if (!race || race.racePoints < boon.cost) {
+      toast({
+        variant: 'destructive',
+        title: 'Cannot Purchase Boon',
+        description: 'You do not have enough Race Points.',
+      });
+      return;
+    }
+    setModalBoon(boon);
+    setIsModalOpen(true);
   };
+
+  const handleDirectiveSubmit = (targets: string[], content: string) => {
+    if (!modalBoon || !world) return;
+  
+    const race = world.races.find(r => r.id === activeRaceId);
+    if (!race || race.racePoints < modalBoon.cost) {
+      toast({
+        variant: 'destructive',
+        title: 'Activation Failed',
+        description: 'You no longer have enough Race Points.',
+      });
+      setIsModalOpen(false);
+      return;
+    }
+  
+    const newDirective: BoonDirective = {
+      id: `${modalBoon.id}_${Date.now()}`,
+      boonId: modalBoon.id,
+      raceId: activeRaceId,
+      targets,
+      content,
+    };
+  
+    // Deduct cost and add directive
+    const newBoonDirectives = [...(world.boonDirectives || []), newDirective];
+    const updatedRaces = world.races.map(r => 
+      r.id === activeRaceId 
+        ? { ...r, racePoints: r.racePoints - (modalBoon?.cost || 0) } 
+        : r
+    );
+  
+    updateWorld({ ...world, races: updatedRaces, boonDirectives: newBoonDirectives });
+  
+    toast({
+      title: 'Boon Activated!',
+      description: `${modalBoon.name} is now pending for the next era.`,
+    });
+  
+    setIsModalOpen(false);
+    setModalBoon(null);
+  };
+  
 
   const handleTimeAdvance = async (years: 1 | 10) => {
     if (!world) return;
@@ -81,6 +137,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
         livingCharacters: race.notableCharacters.filter(c => c.status === 'alive'),
         problems: race.problems || [],
         activeBoons: race.activeBoons || [],
+        namingProfile: race.namingProfile,
     }));
 
     const result = await runAdvanceTime({
@@ -89,7 +146,8 @@ export default function Dashboard({ worldId }: { worldId: string }) {
       era: world.era,
       currentYear: world.currentYear,
       races: raceInputs,
-      chronicleEntry: world.significantEvents[world.significantEvents.length-1]
+      chronicleEntry: world.significantEvents[world.significantEvents.length-1],
+      boonDirectives: world.boonDirectives,
     });
     setIsLoading(false);
 
@@ -97,11 +155,11 @@ export default function Dashboard({ worldId }: { worldId: string }) {
       const { data } = result;
       const { newYear, raceResults } = data;
 
-      const updatedRaces = world.races.map(originalRace => {
+      let updatedRaces = world.races.map(originalRace => {
           const raceResult = raceResults.find(res => res.raceId === originalRace.id);
           if (!raceResult) return originalRace;
 
-          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry, newGovernment, newReligion, newPoliticLogEntry } = raceResult;
+          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry, newGovernment, newReligion, newPoliticLogEntry, newAchievements } = raceResult;
 
           const newHistoryEntry: HistoryEntry = {
               year: newYear,
@@ -140,6 +198,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                   skills: [],
                   specialTraits: [],
                   personalLog: [],
+                  namingProfile: originalRace.namingProfile,
               };
               updatedCharacters.push(newDeadCharacter);
           });
@@ -195,6 +254,24 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                 updatedPoliticalLog.push({ ...newPoliticLogEntry, year: newYear });
             }
 
+            let updatedNamingProfile = originalRace.namingProfile;
+            if (updatedNamingProfile) {
+                const newNames = [
+                    ...(newCharacter ? [newCharacter.name] : []),
+                    ...(namedCommonerDeaths || []).map(d => d.name)
+                ];
+                updatedNamingProfile.exampleNames = [...new Set([...updatedNamingProfile.exampleNames, ...newNames])];
+            }
+            
+            let updatedRacePoints = originalRace.racePoints;
+            (newAchievements || []).forEach(ach => {
+                updatedRacePoints += ach.rpAward;
+                toast({
+                    title: "Achievement Unlocked!",
+                    description: `The ${originalRace.name} earned '${ach.title}' (+${ach.rpAward} RP)`
+                })
+            });
+
           return {
               ...originalRace,
               population: populationChange.newPopulation,
@@ -206,16 +283,29 @@ export default function Dashboard({ worldId }: { worldId: string }) {
               government: updatedGovernment,
               religion: updatedReligion,
               politicalLog: updatedPoliticalLog,
+              namingProfile: updatedNamingProfile,
+              racePoints: updatedRacePoints,
           };
       });
 
       const totalPopulation = updatedRaces.reduce((sum, r) => sum + r.population, 0);
+
+       // Post-simulation cleanup
+       updatedRaces = updatedRaces.map(race => {
+        const permanentBoons = (race.activeBoons || []).filter(boonId => {
+          const boonDetails = creatorStoreBoons.find(b => b.id === boonId);
+          return boonDetails?.duration === 'Permanent';
+        });
+        return { ...race, activeBoons: permanentBoons };
+      });
+
 
       updateWorld({
         ...world,
         currentYear: newYear,
         races: updatedRaces,
         population: totalPopulation,
+        boonDirectives: [], // Clear directives after they've been processed
         narrativeLog: [...world.narrativeLog], // Can be updated with a world-level summary if needed
       });
 
@@ -261,17 +351,17 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                             <Store className="h-6 w-6 text-primary" />
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-4xl">
                        <DialogHeader>
                             <DialogTitle className="font-headline flex items-center gap-2">
                                 <Sparkles className="text-primary" />
-                                Creator's Store
+                                Creator's Toolkit: {activeRace.name}
                             </DialogTitle>
                             <DialogDescription>
-                                Spend Race Points (RP) to bestow blessings upon the {activeRace.name}.
+                                Use your divine influence or spend Race Points (RP) to guide your people.
                             </DialogDescription>
                         </DialogHeader>
-                       <InfluenceTab world={world} setWorld={updateWorld} isLoading={isLoading} activeRaceId={activeRaceId} />
+                       <InfluenceTab world={world} setWorld={updateWorld} isLoading={isLoading} activeRaceId={activeRaceId} onBoonPurchase={handleBoonPurchase} />
                     </DialogContent>
                 </Dialog>
             </div>
@@ -327,6 +417,13 @@ export default function Dashboard({ worldId }: { worldId: string }) {
             </Button>
         </CardContent>
       </Card>
+      <BoonModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        boon={modalBoon}
+        race={activeRace}
+        onSubmit={handleDirectiveSubmit}
+      />
     </div>
   );
 }

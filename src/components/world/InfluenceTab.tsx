@@ -7,24 +7,24 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import type { World, NarrativeEntry, BoonId } from '@/types/world';
+import type { World, NarrativeEntry, BoonId, Boon } from '@/types/world';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { BookUp, Sparkles, Gem } from 'lucide-react';
-import { Switch } from '../ui/switch';
-import { Label } from '../ui/label';
-import { creatorStoreBoons } from '@/lib/boons';
+import { creatorStoreBoons } from '@/data/boons';
+import { CreatorToolkit } from '../CreatorToolkit';
 
 type TabProps = {
   world: World;
   setWorld: (world: World) => void;
   isLoading: boolean;
   activeRaceId: string;
+  onBoonPurchase: (boon: Boon) => void;
 };
 
-export function InfluenceTab({ world, setWorld, isLoading, activeRaceId }: TabProps) {
+export function InfluenceTab({ world, setWorld, isLoading, activeRaceId, onBoonPurchase }: TabProps) {
   const [chronicleEntry, setChronicleEntry] = useState('');
   const { toast } = useToast();
 
@@ -49,28 +49,25 @@ export function InfluenceTab({ world, setWorld, isLoading, activeRaceId }: TabPr
     });
   };
 
-  const onBoonToggle = (boonId: BoonId, isActive: boolean) => {
+  const onBoonToggle = (boonId: string, isActive: boolean) => {
     const boon = creatorStoreBoons.find(b => b.id === boonId);
-    if (!boon) return;
+    if (!boon || !activeRace) return;
     
-    const raceToUpdate = world.races.find(r => r.id === activeRaceId);
-    if (!raceToUpdate) return;
-
     let newRaces = world.races.map(r => ({...r, activeBoons: r.activeBoons || []}));
     const raceIndex = newRaces.findIndex(r => r.id === activeRaceId);
 
     if (isActive) { // Activating
-      if (raceToUpdate.racePoints >= boon.cost) {
+      if (activeRace.racePoints >= boon.cost) {
         const updatedRace = {
-            ...raceToUpdate,
-            racePoints: raceToUpdate.racePoints - boon.cost,
-            activeBoons: [...(raceToUpdate.activeBoons || []), boon.id],
+            ...activeRace,
+            racePoints: activeRace.racePoints - boon.cost,
+            activeBoons: [...(activeRace.activeBoons || []), boon.id],
         };
         newRaces[raceIndex] = updatedRace;
         
         toast({
           title: 'Boon Activated!',
-          description: `${boon.name} is now active for the ${raceToUpdate.name}.`,
+          description: `${boon.name} is now active for the ${activeRace.name}.`,
         });
       } else {
         toast({
@@ -82,9 +79,9 @@ export function InfluenceTab({ world, setWorld, isLoading, activeRaceId }: TabPr
       }
     } else { // Deactivating
         const updatedRace = {
-            ...raceToUpdate,
-            racePoints: raceToUpdate.racePoints + boon.cost,
-            activeBoons: (raceToUpdate.activeBoons || []).filter(id => id !== boonId),
+            ...activeRace,
+            racePoints: activeRace.racePoints + boon.cost,
+            activeBoons: (activeRace.activeBoons || []).filter(id => id !== boonId),
         };
         newRaces[raceIndex] = updatedRace;
 
@@ -103,43 +100,13 @@ export function InfluenceTab({ world, setWorld, isLoading, activeRaceId }: TabPr
   }
 
   return (
-    <div className="grid gap-6 pt-4">
-       <div className='flex items-center justify-end gap-2 font-bold text-lg text-primary bg-primary/10 px-3 py-1.5 rounded-md'>
-            <Gem className="h-5 w-5" />
-            <span>{activeRace.racePoints} RP</span>
-        </div>
-      <div className="space-y-4">
-        {creatorStoreBoons.map((boon) => {
-          const isAcquired = (activeRace.activeBoons || []).includes(boon.id);
-          const canAfford = activeRace.racePoints >= boon.cost;
-
-          return (
-            <div
-              key={boon.id}
-              className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-            >
-              <div className="flex items-center gap-4">
-                {boon.icon}
-                <div>
-                  <Label
-                    htmlFor={`boon-${boon.id}-${activeRace.id}`}
-                    className="font-semibold"
-                  >
-                    {boon.name}
-                  </Label>
-                    <p className="text-xs text-muted-foreground">{boon.description} (Cost: {boon.cost} RP)</p>
-                </div>
-              </div>
-              <Switch
-                id={`boon-${boon.id}-${activeRace.id}`}
-                checked={isAcquired}
-                onCheckedChange={(isActive) => onBoonToggle(boon.id, isActive)}
-                disabled={isLoading || (!isAcquired && !canAfford)}
-              />
-            </div>
-          );
-        })}
-      </div>
+    <div className="grid md:grid-cols-2 gap-6 pt-4">
+      <CreatorToolkit 
+        race={activeRace}
+        isLoading={isLoading}
+        onBoonToggle={onBoonToggle}
+        onBoonPurchase={onBoonPurchase}
+      />
       <Card>
         <CardHeader>
           <CardTitle className="font-headline flex items-center">
