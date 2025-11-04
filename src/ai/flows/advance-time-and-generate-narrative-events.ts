@@ -300,21 +300,9 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     * You MUST also mention by name **one or two** of the most significant deaths you just generated (from \\\`fallenNotableCharacters\\\` or \\\`namedCommonerDeaths\\\`).
     * 
 8.  **TARGETED DIRECTIVES (MANDATORY):**
-    You must check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If directives exist for the race you are simulating, you MUST execute them.
-    {{#each boonDirectives}}
-        {{#if (this.boonId 'appear_in_dreams')}}
-        - **Directive Active: Appear in Dreams.** You **MUST** make the character with ID '{{targets.[0]}}' have a dream. The message is: '{{content}}'. You **MUST** generate a \\\`personalLogEntry\\\` for them reacting to this.
-        {{/if}}
-        {{#if (this.boonId 'whisper_of_attraction')}}
-        - **Directive Active: Whisper of Attraction.** You **MUST** create a \\\`notableEvent\\\` that forces '{{targets.[0]}}' and '{{targets.[1]}}' to interact, with the goal of fostering '{{content}}'. Their \\\`personalLogEntries\\\` must reflect this.
-        {{/if}}
-        {{#if (this.boonId 'possess_animal')}}
-        - **Directive Active: Possess Animal.** The Creator is possessing an animal. Their goal is: '{{content}}'. You **MUST** generate a \\\`notableEvent\\\` where a "strangely intelligent" animal's action nudges the race toward this goal.
-        {{/if}}
-        {{#if (this.boonId 'sickness_1')}}
-        - **Directive Active: Curse of Sickness.** This race ({{race.name}}) is the target. You **MUST** apply a negative bias to \\\`populationChange.died\\\` and narrate a "draining sickness" in the \\\`summary\\\`.
-        {{/if}}
-    {{/each}}
+    You must check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If directives exist for the race you are simulating, you MUST execute them by interpreting the 'boonId' and 'content' for the specified 'targets'. For example:
+    - If a directive has a 'boonId' of 'appear_in_dreams', you MUST make the targeted character have a dream with the message from 'content', and generate a 'personalLogEntry' for them reflecting on it.
+    - If a directive has a 'boonId' of 'whisper_of_attraction', you MUST create a 'notableEvent' that forces the two targeted characters to interact to foster the bond described in 'content'. Their 'personalLogEntries' must reflect this.
 
 9.  **ACHIEVEMENT GENERATION (MANDATORY):**
     You must review this race's \\\`events\\\` list that you just generated. If a major, "first-time" milestone occurred, you **MUST** generate a \\\`newAchievement\\\` object for it.
@@ -411,5 +399,7 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
+
+    
 
     
