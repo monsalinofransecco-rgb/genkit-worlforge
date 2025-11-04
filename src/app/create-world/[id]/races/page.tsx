@@ -32,17 +32,18 @@ import type { World, Race } from '@/types/world';
 import { Loader2, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+// Simplified schema for robust validation
 const raceSchema = z.object({
   name: z.string().min(3, 'Race name must be at least 3 characters.'),
-  description: z.string().min(10, 'Describe the race.'),
+  description: z.string().min(10, 'Description must be at least 10 characters.'),
   racialTraits: z
     .string()
-    .min(1, 'List at least one common trait.'),
+    .min(3, 'Please list at least one racial trait.'),
   specialTraits: z
     .string()
     .optional(),
-  location: z.string().min(5, 'Describe their starting location.'),
-  population: z.number().int().min(100).max(5000).default(1000),
+  location: z.string().min(3, 'Location must be at least 3 characters.'),
+  population: z.coerce.number().int().min(100, "Population must be at least 100.").max(5000, "Population cannot exceed 5000.").default(1000),
 });
 
 const formSchema = z.object({
@@ -88,8 +89,8 @@ export default function PopulateRacesPage({
       
       const worldRaceCount = loadedWorld.races.length > 0 ? loadedWorld.races.length : 0;
       
-      const currentRaces = form.getValues('races');
       if (fields.length === 0 && worldRaceCount > 0) {
+        // Only append if the form is empty, to avoid re-adding on re-renders
         for (let i = 0; i < worldRaceCount; i++) {
           append({ name: '', description: '', racialTraits: '', specialTraits: '', location: '', population: 1000 });
         }
@@ -270,7 +271,7 @@ export default function PopulateRacesPage({
                             name={`races.${index}.specialTraits`}
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Special Traits (comma-separated)</FormLabel>
+                                <FormLabel>Special Traits (comma-separated, optional)</FormLabel>
                                 <FormControl>
                                     <Input
                                     placeholder="e.g., Fire Resistance, Night Vision"
@@ -291,7 +292,7 @@ export default function PopulateRacesPage({
                                 <FormLabel>Starting Location Description</FormLabel>
                                 <FormControl>
                                     <Input
-                                    placeholder="e.g., A lush, hidden valley in the Crystal Mountains"
+                                    placeholder="e.g., A lush, hidden valley"
                                     {...field}
                                     />
                                 </FormControl>
@@ -310,7 +311,6 @@ export default function PopulateRacesPage({
                                         type="number"
                                         placeholder="e.g., 1000"
                                         {...field}
-                                        onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}
                                         />
                                     </FormControl>
                                     <FormMessage />
