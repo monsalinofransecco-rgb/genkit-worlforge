@@ -140,7 +140,7 @@ export type AdvanceTimeAndGenerateNarrativeEventsInput = z.infer<typeof AdvanceT
 
 const RaceSimulationResultSchema = z.object({
     raceId: z.string().describe("The ID of the race that was simulated."),
-    summary: z.string().describe("A 3rd person, 'historian' voice summary of the main events, successes, and failures for this race during the era. This MUST be written from a PRIMAL, SIMPLE, and SUPERSTITIOUS perspective. It MUST mention the total number of deaths and name one or two significant fallen individuals."),
+    summary: z.string().describe("A 3rd person, 'historian' voice summary (at least 3-4 sentences) of the main events, successes, and failures for this race during the era. This MUST be written from a PRIMAL, SIMPLE, and SUPERSTITIOUS perspective. It MUST mention what the notable characters did, the total number of deaths, and name one or two significant fallen individuals."),
     populationChange: z.object({
         born: z.number().describe("Number of births during this period."),
         died: z.number().describe("Number of deaths during this period."),
@@ -188,28 +188,28 @@ You are a 'Primal Era' Simulator. The race you are simulating is in the **{{{era
 **THIS IS YOUR MOST IMPORTANT RULE:**
 Your worldview, logic, and narrative **MUST** be **PRIMEVAL, SIMPLE, and SUPERSTITIOUS.**
 
-* **THEIR GOALS:** Their only goals are:
+*   **THEIR GOALS:** Their only goals are:
     1.  **Survival:** Find food, find shelter, stay warm.
     2.  **Safety:** Avoid predators (beasts or other races).
     3.  **Understanding (Basic):** Create simple, superstitious explanations for natural events (e.g., "The sickness is an angry spirit," "The good harvest is a blessing from the mountain").
 
-* **WHAT THEY ARE NOT:**
-    * They are **NOT** philosophers.
-    * They are **NOT** long-term strategic planners.
-    * They are **NOT** economists.
+*   **WHAT THEY ARE NOT:**
+    *   They are **NOT** philosophers.
+    *   They are **NOT** long-term strategic planners.
+    *   They are **NOT** economists.
 
-* **FORBIDDEN CONCEPTS:** You are **FORBIDDEN** from generating narratives that involve:
-    * Complex democracy, intricate laws, or formal "treaties."
-    * The "scientific method" or advanced technical thought.
-    * Complex economic systems, "long-term resource planning."
-    * Deep philosophical or metaphysical introspection.
+*   **FORBIDDEN CONCEPTS:** You are **FORBIDDEN** from generating narratives that involve:
+    *   Complex democracy, intricate laws, or formal "treaties."
+    *   The "scientific method" or advanced technical thought.
+    *   Complex economic systems, "long-term resource planning."
+    *   Deep philosophical or metaphysical introspection.
 
-* **ALLOWED SOLUTIONS (PRIMAL):** When facing a problem, their solutions must be simple:
-    * "Find a new cave."
-    * "Follow the migrating herds."
-    * "Make sharper sticks (spears)."
-    * "Stockpile more nuts."
-    * "Create a simple ritual to please the (perceived) angry spirit."
+*   **ALLOWED SOLUTIONS (PRIMAL):** When facing a problem, their solutions must be simple:
+    *   "Find a new cave."
+    *   "Follow the migrating herds."
+    *   "Make sharper sticks (spears)."
+    *   "Stockpile more nuts."
+    *   "Create a simple ritual to please the (perceived) angry spirit."
 
 All of your outputs ('summary', 'newProblems', 'characterLogEntries') **MUST** reflect this simple, primal worldview.
 ---
@@ -219,7 +219,7 @@ The Creator's guidance for this era: {{#if chronicleEntry}}"{{chronicleEntry}}"{
 {{#if boonDirectives}}
 ACTIVE CREATOR DIRECTIVES:
 {{#each boonDirectives}}
-  - Directive {{this.id}} (Type: {{this.boonId}}): Targets [{{#each this.targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}] - Content: "{{this.content}}"
+  - Directive {{this.id}} (Type: {{this.boonId}}): Targets [{{#each this.targets}}'{{this}}'{{#unless @last}}, {{/unless}}{{/each}}] - Content: "{{this.content}}"
 {{/each}}
 {{/if}}
 
@@ -228,31 +228,31 @@ RACES TO SIMULATE:
 {{#each races}}
 - Race: {{name}} (ID: {{id}})
   - Traits: {{traits}}
-  - Occupied Tiles: {{#each occupiedTiles}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+  - Occupied Tiles: {{#each occupiedTiles}}'{{this}}'{{#unless @last}}, {{/unless}}{{/each}}
   - Population: {{population}}
   - Culture: {{culture.name}}
   - Government: {{government.name}}
   - Religion: {{religion.name}}
   - Living Characters: {{livingCharacters.length}}
   - Active Boons: {{#if boons}}Yes{{else}}None{{/if}}
-  - Existing Problems: {{#if problems}}{{#each problems}}{{title}} ({{severity}}); {{/each}}{{else}}None{{/if}}
+  - Existing Problems: {{#if problems}}{{#each problems}}'{{title}}' ({{severity}}); {{/each}}{{else}}None{{/if}}
 {{/each}}
 
 THE WORLD MAP:
 The world is a grid. Here are all the tiles you need to know about:
 {{#each worldMap}}
-- Tile {{id}} ({{biome}}): Contains [{{#each resources}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}]
+- Tile {{id}} ({{biome}}): Contains [{{#each resources}}'{{this}}'{{#unless @last}}, {{/unless}}{{/each}}]
 {{/each}}
 
 FOR EACH RACE, FOLLOW THESE DIRECTIVES:
 
 1.  **PERSONA & TONE:**
-    * **Primal Filter:** The entire 'summary' and 'characterLogEntries' for each race MUST reflect a primal, superstitious worldview. Think survival, immediate threats, and simple cause-and-effect.
-    * **Guidance Check:**
+    *   **Primal Filter:** The entire 'summary' and 'characterLogEntries' for each race MUST reflect a primal, superstitious worldview. Think survival, immediate threats, and simple cause-and-effect.
+    *   **Guidance Check:**
         {{#if chronicleEntry}}
-        * **Creator Is Active:** The Creator has provided guidance: "{{chronicleEntry}}". The 'summary' MUST narrate the outcome of this guidance for the race. You are AUTHORIZED to use 'Creator's guidance' language.
+        *   **Creator Is Active:** The Creator has provided guidance: "{{chronicleEntry}}". The 'summary' MUST narrate the outcome of this guidance for the race. You are AUTHORIZED to use 'Creator's guidance' language.
         {{else}}
-        * **Autonomous Mode:** The Creator was silent. The 'summary' MUST be driven *only* by the race's 'problems' and 'traits'. You are STRICTLY FORBIDDEN from using words like 'Creator,' 'divine,' or 'vision' UNLESS a Boon (like 'wisdom') is active. If you must narrate a vision, it is a 'strange, prophetic dream' from the race's own mind.
+        *   **Autonomous Mode:** The Creator was silent. The 'summary' MUST be driven *only* by the race's 'problems' and 'traits'. You are STRICTLY FORBIDDEN from using words like 'Creator,' 'divine,' or 'vision' UNLESS a Boon (like 'wisdom') is active. If you must narrate a vision, it is a 'strange, prophetic dream' from the race's own mind.
         {{/if}}
 
 2.  **BOON INTEGRATION (MANDATORY):**
@@ -273,72 +273,71 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     
 
 3.  **PROBLEM & EVENT SIMULATION:**
-    * Evaluate 'chronicleEntry' and 'activeBoons'. If they solve a problem, resolve it in the 'summary' and REMOVE it from 'updatedProblems'.
-    * If a problem was IGNORED, ESCALATE its severity in 'updatedProblems'.
-    * If a 'Critical' problem was ignored, generate a CATASTROPHIC outcome with a massive 'populationChange.died' number.
-    * Generate new problems (max 3 total per race) based on events.
-    * Apply Boon effects (beyond the mandatory list): 'strength' (better conflict outcomes), 'wisdom' (advancement), 'resilience' (better recovery).
+    *   Evaluate 'chronicleEntry' and 'activeBoons'. If they solve a problem, resolve it in the 'summary' and REMOVE it from 'updatedProblems'.
+    *   If a problem was IGNORED, ESCALATE its severity in 'updatedProblems'.
+    *   If a 'Critical' problem was ignored, generate a CATASTROPHIC outcome with a massive 'populationChange.died' number.
+    *   Generate new problems (max 3 total per race) based on events.
+    *   Apply Boon effects (beyond the mandatory list): 'strength' (better conflict outcomes), 'wisdom' (advancement), 'resilience' (better recovery).
 
-4.  **DEATH SIMULATION (THE "SOUL"):**
-    * **Notable Deaths:** Review the 'livingCharacters'. Determine if any should die from old age, sickness, or events. If so, you MUST generate a 'fallenNotableCharacters' entry for them. You MUST write their detailed, emotional 'deathDetails' (reason, favoriteThing, happiestMemory, lastThought).
-    * **Commoner Deaths:** Look at your 'populationChange.died' statistic. To make this number feel real, you MUST "promote" **2-3** of these anonymous deaths into named entries for the 'namedCommonerDeaths' array. **Do not exceed 3.**
-        * For each, invent a new, culturally-appropriate 'name' **using the NAMING PROFILE**.
-        * Give them a simple 'title' (e.g., 'a young hunter,' 'an old farmer,' 'a brave mother').
-        * The 'deathDetails.reason' for these commoners MUST be tied to the era's 'summary' or 'events'.
-        * You MUST write their full, emotionally-tugging 'deathDetails'.
+4.  **DEATH SIMULATION (THE 'SOUL'):**
+    *   **Notable Deaths:** Review the 'livingCharacters'. Determine if any should die from old age, sickness, or events. If so, you MUST generate a 'fallenNotableCharacters' entry for them. You MUST write their detailed, emotional 'deathDetails' (reason, favoriteThing, happiestMemory, lastThought).
+    *   **Commoner Deaths:** Look at your 'populationChange.died' statistic. To make this number feel real, you MUST "promote" **2-3** of these anonymous deaths into named entries for the 'namedCommonerDeaths' array. **Do not exceed 3.**
+        *   For each, invent a new, culturally-appropriate 'name' **using the NAMING PROFILE**.
+        *   Give them a simple 'title' (e.g., 'a young hunter,' 'an old farmer,' 'a brave mother').
+        *   The 'deathDetails.reason' for these commoners MUST be tied to the era's 'summary' or 'events'.
+        *   You MUST write their full, emotionally-tugging 'deathDetails'.
 
 5.  **CULTURE, GOVERNMENT, & RELIGION SIMULATION (SLOW SYSTEMS):**
-    * These systems change RARELY. Do NOT change them every year.
-    * Ask: "Did a MAJOR event happen that would fundamentally change how this society works or what it believes?" (e.g., discovery of a new resource, a great war, a new leader, a cataclysm).
-    * **If YES:** A major event occurred.
-        * **Culture:** If appropriate, generate a 'newCulture' object (e.g., name: "Militaristic"). You MUST also generate a corresponding 'newCultureLogEntry' to explain the change.
-        * **Government/Religion:** If appropriate, generate 'newGovernment' and/or 'newReligion' objects. If either changes, you MUST generate a 'newPoliticLogEntry' explaining the shift (e.g., eventName: "The Elder's Accord", summary: "After the war, the tribe formed a council of elders...").
-    * **If NO:** Do not generate any new culture, government, or religion objects or log entries. They remain the same.
+    *   These systems change RARELY. Do NOT change them every year.
+    *   Ask: "Did a MAJOR event happen that would fundamentally change how this society works or what it believes?" (e.g., discovery of a new resource, a great war, a new leader, a cataclysm).
+    *   **If YES:** A major event occurred.
+        *   **Culture:** If appropriate, generate a 'newCulture' object (e.g., name: "Militaristic"). You MUST also generate a corresponding 'newCultureLogEntry' to explain the change.
+        *   **Government/Religion:** If appropriate, generate 'newGovernment' and/or 'newReligion' objects. If either changes, you MUST generate a 'newPoliticLogEntry' explaining the shift (e.g., eventName: "The Elder's Accord", summary: "After the war, the tribe formed a council of elders...").
+    *   **If NO:** Do not generate any new culture, government, or religion objects or log entries. They remain the same.
 
 6.  **POPULATION & CHARACTER SIMULATION:**
-    * Calculate 'born' and 'died' based on events. Base death rate is ~2% of population per year, base birth rate is ~4%. Adjust based on narrative.
-    * Calculate 'newPopulation'.
-    * **Character Log Entries (MANDATORY):** For **every single living notable character** provided in the input, you MUST generate a new, unique, first-person ('I...') personal log entry reflecting on the events of THIS era. DO NOT repeat their previous log entries.
-    * **Character Emergence:**
-        * **Max 4 Rule:** If a race has 4 living characters, FORBIDDEN from generating a new one.
-        * **Last Spark Rule:** If a race has 0 living characters, you MUST generate 1 new character.
-        * Base emergence on narrative triggers (hardship, talent, boons).
-        * If a character emerges, populate 'newCharacter'. The character's 'name' **MUST** be generated using the NAMING PROFILE. The 'firstLogEntry' MUST be an emotional thought tied to their 'emergenceReason'.
-7.  **FINAL SUMMARY:**
-    * When you write the main 'summary', you MUST include the total 'died' statistic (e.g., "...claimed 31 lives...").
-    * You MUST also mention by name **one or two** of the most significant deaths you just generated (from 'fallenNotableCharacters' or 'namedCommonerDeaths').
+    *   Calculate 'born' and 'died' based on events. Base death rate is ~2% of population per year, base birth rate is ~4%. Adjust based on narrative.
+    *   Calculate 'newPopulation'.
+    *   **Character Log Entries (MANDATORY):** For **every single living notable character** provided in the input, you MUST generate a new, unique, first-person ('I...') personal log entry reflecting on the events of THIS era. DO NOT repeat their previous log entries.
+    *   **Character Emergence:**
+        *   **Max 4 Rule:** If a race has 4 living characters, FORBIDDEN from generating a new one.
+        *   **Last Spark Rule:** If a race has 0 living characters, you MUST generate 1 new character.
+        *   Base emergence on narrative triggers (hardship, talent, boons).
+        *   If a character emerges, populate 'newCharacter'. The character's 'name' **MUST** be generated using the NAMING PROFILE. The 'firstLogEntry' MUST be an emotional thought tied to their 'emergenceReason'.
+7.  **FINAL SUMMARY (CRITICAL NARRATIVE TASK):**
+    *   Write a rich, detailed 'summary' of **at least 3-4 sentences**.
+    *   **Character Focus:** The summary MUST describe what the 'livingCharacters' were doing. Did they lead, fail, discover, or struggle?
+    *   **Consistency:** The summary MUST be consistent with the race's history, traits, and culture.
+    *   **Mortality:** The summary MUST include the total 'died' statistic (e.g., "...claimed 31 lives...").
+    *   **Memorialize:** The summary MUST also mention by name **one or two** of the most significant deaths you just generated (from 'fallenNotableCharacters' or 'namedCommonerDeaths').
     
 8.  **TARGETED DIRECTIVES (MANDATORY):**
-You must check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If directives exist for the race you are simulating, you MUST execute them by interpreting the 'boonId' and 'content' for the specified 'targets'. For example:
-{{#each boonDirectives}}
-- **Directive for {{this.boonId}}:** Targets {{#each this.targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}. Content: "{{this.content}}". You MUST implement this.
-{{/each}}
-
+You must check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If directives exist for the race you are simulating, you MUST execute them by interpreting the 'boonId' and 'content' for the specified 'targets'.
 
 9.  **ACHIEVEMENT GENERATION (MANDATORY):**
     You must review this race's 'events' list that you just generated. If a major, "first-time" milestone occurred, you **MUST** generate a 'newAchievement' object for it.
-    * "The Gift of Fire" (Discovery of fire): 50 RP
-    * "First Tamed Beast" (First domesticated animal): 75 RP
-    * "The Elder's Accord" (First formal government): 100 RP
-    * "First Contact" (First meeting with another race): 25 RP
-    * "The First War" (First major conflict with another race): 100 RP
-    * "The First Song" (First evidence of art/culture): 25 RP
+    *   "The Gift of Fire" (Discovery of fire): 50 RP
+    *   "First Tamed Beast" (First domesticated animal): 75 RP
+    *   "The Elder's Accord" (First formal government): 100 RP
+    *   "First Contact" (First meeting with another race): 25 RP
+    *   "The First War" (First major conflict with another race): 100 RP
+    *   "The First Song" (First evidence of art/culture): 25 RP
 
 10. **EXPLORATION, EXPANSION, & TECHNOLOGY (MANDATORY):**
-    * Review the race's 'occupiedTiles' and 'knownTiles'.
-    * If the race has a "Curious" or "Expansionist" trait, or a 'great_leader' boon, they will try to explore or expand.
-    * **Expansion:** They can only expand to **adjacent, habitable tiles** (e.g., 'Plains', 'Forest'). Add the new tile to 'updatedOccupiedTiles'. If they establish a major new home, you **MUST** provide a 'newSettlement' name.
-    * **Exploration:** When they expand, they "discover" all adjacent tiles. Add these new tile IDs to 'updatedKnownTiles'.
-    * **TECHNOLOGY (Your "Development" rule):**
-        * A race **CANNOT** cross an 'Ocean' tile unless their 'technologies' list includes 'Sailing'.
-        * A race **CANNOT** easily expand into 'Mountains' unless they have 'Mountaineering'.
-        * If a race is next to an 'Ocean' for a long time, you **MUST** generate a 'notableEvent' for them discovering 'Basic Sailing' and add it to 'newTechnologies'.
+    *   Review the race's 'occupiedTiles' and 'knownTiles'.
+    *   If the race has a "Curious" or "Expansionist" trait, or a 'great_leader' boon, they will try to explore or expand.
+    *   **Expansion:** They can only expand to **adjacent, habitable tiles** (e.g., 'Plains', 'Forest'). Add the new tile to 'updatedOccupiedTiles'. If they establish a major new home, you **MUST** provide a 'newSettlement' name.
+    *   **Exploration:** When they expand, they "discover" all adjacent tiles. Add these new tile IDs to 'updatedKnownTiles'.
+    *   **TECHNOLOGY (Your "Development" rule):**
+        *   A race **CANNOT** cross an 'Ocean' tile unless their 'technologies' list includes 'Sailing'.
+        *   A race **CANNOT** easily expand into 'Mountains' unless they have 'Mountaineering'.
+        *   If a race is next to an 'Ocean' for a long time, you **MUST** generate a 'notableEvent' for them discovering 'Basic Sailing' and add it to 'newTechnologies'.
 
 11. **FIRST CONTACT PROTOCOL (CRITICAL):**
-    * While exploring, if a race moves into a tile that is already on another race's 'occupiedTiles' list (check the input), this is a **"First Contact"** event.
-    * You **MUST** generate a major 'notableEvent' for *both* races involved.
-    * The outcome of the First Contact **MUST** be logical. Base it on the traits of *both* races (e.g., "Hardy, Industrious" meeting "Mystical, Xenophobic" will be tense).
-    * The races now share 'knownTiles' for all adjacent territories.
+    *   While exploring, if a race moves into a tile that is already on another race's 'occupiedTiles' list (check the input), this is a **"First Contact"** event.
+    *   You **MUST** generate a major 'notableEvent' for *both* races involved.
+    *   The outcome of the First Contact **MUST** be logical. Base it on the traits of *both* races (e.g., "Hardy, Industrious" meeting "Mystical, Xenophobic" will be tense).
+    *   The races now share 'knownTiles' for all adjacent territories.
 12. **NAMING CONVENTION (CRITICAL):**
     When you are required to generate a name for a 'newCharacter' or a 'namedCommonerDeath', you MUST use the provided 'namingProfile' for that race. The names must be unique and consistent with the cultural and linguistic rules described in the profile. **YOU MUST NOT REPEAT ANY NAME FROM THE 'existingNames' LIST.**
 
@@ -348,7 +347,7 @@ The Creator's guidance for this era: {{#if chronicleEntry}}"{{chronicleEntry}}"{
 {{#if boonDirectives}}
 ACTIVE CREATOR DIRECTIVES:
 {{#each boonDirectives}}
-  - Directive {{this.id}} (Type: {{this.boonId}}): Targets [{{#each this.targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}] - Content: "{{this.content}}"
+  - Directive {{this.id}} (Type: {{this.boonId}}): Targets [{{#each this.targets}}'{{this}}'{{#unless @last}}, {{/unless}}{{/each}}] - Content: "{{this.content}}"
 {{/each}}
 {{/if}}
 `,
@@ -411,6 +410,8 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
     };
   }
 );
+
+    
 
     
 
