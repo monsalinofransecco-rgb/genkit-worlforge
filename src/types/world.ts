@@ -1,3 +1,4 @@
+
 export type BoonId = 'fertility' | 'strength' | 'wisdom' | 'resilience';
 
 export interface Boon {
@@ -97,7 +98,6 @@ export interface Race {
   racePoints: number;
   activeBoons: string[];
   traits?: string;
-  location?: string;
   problems?: Problem[];
   notableCharacters: NotableCharacter[];
   history: HistoryEntry[];
@@ -107,6 +107,10 @@ export interface Race {
   culture: DetailObject;
   cultureLog: CultureLogEntry[];
   politicalLog: PoliticalLogEntry[];
+  // NEW FIELDS
+  occupiedTiles: string[];
+  knownTiles: string[];
+  technologies: string[];
 }
 
 export interface NarrativeEntry {

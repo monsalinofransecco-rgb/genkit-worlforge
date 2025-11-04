@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -35,6 +36,7 @@ import { OverviewTab } from './OverviewTab';
 import { HistoryTab } from './HistoryTab';
 import { BoonModal } from '../BoonModal';
 import { Boon } from '@/data/boons';
+import { worldMap } from '@/data/worldMap';
 
 
 export default function Dashboard({ worldId }: { worldId: string }) {
@@ -43,10 +45,10 @@ export default function Dashboard({ worldId }: { worldId: string }) {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [map, setMap] = useState(worldMap);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalBoon, setModalBoon] = useState<Boon | null>(null);
-  const [boonDirectives, setBoonDirectives] = useState<BoonDirective[]>([]);
 
 
   useEffect(() => {
@@ -101,7 +103,6 @@ export default function Dashboard({ worldId }: { worldId: string }) {
       content,
     };
   
-    // Deduct cost and add directive
     const newBoonDirectives = [...(world.boonDirectives || []), newDirective];
     const updatedRaces = world.races.map(r => 
       r.id === activeRaceId 
@@ -130,7 +131,6 @@ export default function Dashboard({ worldId }: { worldId: string }) {
         name: race.name,
         population: race.population,
         traits: race.traits || "",
-        location: race.location || "",
         culture: race.culture,
         government: race.government,
         religion: race.religion,
@@ -138,6 +138,9 @@ export default function Dashboard({ worldId }: { worldId: string }) {
         problems: race.problems || [],
         activeBoons: race.activeBoons || [],
         namingProfile: race.namingProfile,
+        occupiedTiles: race.occupiedTiles,
+        knownTiles: race.knownTiles,
+        technologies: race.technologies,
     }));
 
     const result = await runAdvanceTime({
@@ -148,6 +151,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
       races: raceInputs,
       chronicleEntry: world.significantEvents[world.significantEvents.length-1],
       boonDirectives: world.boonDirectives,
+      worldMap: map,
     });
     setIsLoading(false);
 
@@ -159,7 +163,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
           const raceResult = raceResults.find(res => res.raceId === originalRace.id);
           if (!raceResult) return originalRace;
 
-          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry, newGovernment, newReligion, newPoliticLogEntry, newAchievements } = raceResult;
+          const { summary, populationChange, events, emergenceReason, updatedProblems, newCharacter, characterLogEntries, fallenNotableCharacters, namedCommonerDeaths, newCulture, newCultureLogEntry, newGovernment, newReligion, newPoliticLogEntry, newAchievements, updatedOccupiedTiles, updatedKnownTiles, newTechnologies } = raceResult;
 
           const newHistoryEntry: HistoryEntry = {
               year: newYear,
@@ -260,7 +264,7 @@ export default function Dashboard({ worldId }: { worldId: string }) {
                     ...(newCharacter ? [newCharacter.name] : []),
                     ...(namedCommonerDeaths || []).map(d => d.name)
                 ];
-                updatedNamingProfile.exampleNames = [...new Set([...updatedNamingProfile.exampleNames, ...newNames])];
+                updatedNamingProfile.exampleNames = [...new Set([...(updatedNamingProfile.exampleNames || []), ...newNames])];
             }
             
             let updatedRacePoints = originalRace.racePoints;
@@ -285,6 +289,9 @@ export default function Dashboard({ worldId }: { worldId: string }) {
               politicalLog: updatedPoliticalLog,
               namingProfile: updatedNamingProfile,
               racePoints: updatedRacePoints,
+              occupiedTiles: updatedOccupiedTiles,
+              knownTiles: updatedKnownTiles,
+              technologies: [...originalRace.technologies, ...(newTechnologies || [])],
           };
       });
 

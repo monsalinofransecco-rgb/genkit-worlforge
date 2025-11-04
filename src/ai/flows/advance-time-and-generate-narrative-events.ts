@@ -1,10 +1,6 @@
 
 'use server';
 
-/**
- * @fileOverview Advances time in the simulation and generates narrative events for all races.
- */
-
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 import type { BoonId } from '@/types/world';
@@ -90,6 +86,14 @@ const AchievementSchema = z.object({
     content: z.string().describe("e.g., 'The mountain will bleed...'")
   });
 
+const MapTileSchema = z.object({
+    id: z.string(),
+    x: z.number(),
+    y: z.number(),
+    biome: z.string(),
+    resources: z.array(z.string()),
+});
+
 // Schemas for the main flow
 const ProblemSchema = z.object({
     id: z.string(),
@@ -103,13 +107,15 @@ const RaceSimulationInputSchema = z.object({
     name: z.string(),
     population: z.number(),
     traits: z.string().describe("Comma-separated list of the race's core traits, e.g., 'Hardy, Industrious'"),
-    location: z.string().describe("The race's primary location, e.g., 'Crystal Mountains'"),
     culture: DetailObjectSchema,
     government: DetailObjectSchema,
     religion: DetailObjectSchema,
     livingCharacters: z.array(LivingCharacterSchema).describe("A list of all currently living notable characters for this race."),
     problems: z.array(ProblemSchema).optional().describe('A list of current problems the race is facing.'),
     activeBoons: z.array(z.string()).describe("An array of active boon IDs, e.g., ['fertility', 'strength']."),
+    occupiedTiles: z.array(z.string()),
+    knownTiles: z.array(z.string()),
+    technologies: z.array(z.string()),
 });
 
 const AdvanceTimeAndGenerateNarrativeEventsInputSchema = z.object({
@@ -119,7 +125,8 @@ const AdvanceTimeAndGenerateNarrativeEventsInputSchema = z.object({
   currentYear: z.number().describe('The current year in the world.'),
   races: z.array(RaceSimulationInputSchema).describe("An array of all races to be simulated."),
   chronicleEntry: z.string().optional().describe('The latest user-written chronicle entry to influence events.'),
-  boonDirectives: z.array(BoonDirectiveSchema).optional().describe("An array of specific, targeted boon directives from the Creator.")
+  boonDirectives: z.array(BoonDirectiveSchema).optional().describe("An array of specific, targeted boon directives from the Creator."),
+  worldMap: z.array(MapTileSchema).describe("The complete world map grid."),
 });
 export type AdvanceTimeAndGenerateNarrativeEventsInput = z.infer<typeof AdvanceTimeAndGenerateNarrativeEventsInputSchema>;
 
@@ -143,7 +150,10 @@ const RaceSimulationResultSchema = z.object({
     newGovernment: DetailObjectSchema.optional().describe("If the government changed THIS ERA, provide the NEW complete government object here."),
     newReligion: DetailObjectSchema.optional().describe("If the religion changed THIS ERA, provide the NEW complete religion object here."),
     newPoliticLogEntry: SocietalLogEntrySchema.optional().describe("If religion OR government changed, you MUST provide a log entry (eventName, summary) explaining what happened and why."),
-    newAchievements: z.array(AchievementSchema).optional().describe("A list of new, major achievements unlocked by this race THIS ERA. Do not grant achievements they have already earned.")
+    newAchievements: z.array(AchievementSchema).optional().describe("A list of new, major achievements unlocked by this race THIS ERA. Do not grant achievements they have already earned."),
+    updatedOccupiedTiles: z.array(z.string()).describe("The new list of all tiles this race occupies."),
+    updatedKnownTiles: z.array(z.string()).describe("The complete list of all tiles this race is aware of (Fog of War)."),
+    newTechnologies: z.array(z.string()).optional().describe("Any new technologies discovered, e.g., 'Sailing'."),
 });
 
 const AdvanceTimeAndGenerateNarrativeEventsOutputSchema = z.object({
@@ -205,13 +215,11 @@ ACTIVE CREATOR DIRECTIVES:
 {{/if}}
 
 
-You will simulate {{years}} years for EACH of the following races. For each race, you will generate a separate result object within the 'raceResults' array.
-
 RACES TO SIMULATE:
 {{#each races}}
 - Race: {{name}} (ID: {{id}})
   - Traits: {{traits}}
-  - Location: {{location}}
+  - Occupied Tiles: {{join occupiedTiles ", "}}
   - Population: {{population}}
   - Culture: {{culture.name}}
   - Government: {{government.name}}
@@ -221,6 +229,11 @@ RACES TO SIMULATE:
   - Existing Problems: {{#if problems}}{{#each problems}}{{title}} ({{severity}}); {{/each}}{{else}}None{{/if}}
 {{/each}}
 
+THE WORLD MAP:
+The world is a grid. Here are all the tiles you need to know about:
+{{#each worldMap}}
+- Tile {{id}} ({{biome}}): Contains [{{join resources ", "}}]
+{{/each}}
 
 FOR EACH RACE, FOLLOW THESE DIRECTIVES:
 
@@ -320,6 +333,23 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     * "The First War" (First major conflict with another race): 100 RP
     * "The First Song" (First evidence of art/culture): 25 RP
 
+10. **EXPLORATION, EXPANSION, & TECHNOLOGY (MANDATORY):**
+    * Review the race's \`occupiedTiles\` and \`knownTiles\`.
+    * If the race has a "Curious" or "Expansionist" trait, or a 'great_leader' boon, they will try to explore or expand.
+    * **Expansion:** They can only expand to **adjacent, habitable tiles** (e.g., 'Plains', 'Forest'). Add the new tile to \`updatedOccupiedTiles\`.
+    * **Exploration:** When they expand, they "discover" all adjacent tiles. Add these new tile IDs to \`updatedKnownTiles\`.
+    * **TECHNOLOGY (Your "Development" rule):**
+        * A race **CANNOT** cross an 'Ocean' tile unless their \`technologies\` list includes 'Sailing'.
+        * A race **CANNOT** easily expand into 'Mountains' unless they have 'Mountaineering'.
+        * If a race is next to an 'Ocean' for a long time, you **MUST** generate a \`notableEvent\` for them discovering 'Basic Sailing' and add it to \`newTechnologies\`.
+
+11. **FIRST CONTACT PROTOCOL (CRITICAL):**
+    * While exploring, if a race moves into a tile that is already on another race's \`occupiedTiles\` list (check the input), this is a **"First Contact"** event.
+    * You **MUST** generate a major \`notableEvent\` for *both* races involved.
+    * The outcome of the First Contact **MUST** be logical. Base it on the traits of *both* races (e.g., "Hardy, Industrious" meeting "Mystical, Xenophobic" will be tense).
+    * The races now share \`knownTiles\` for all adjacent territories.
+
+
 Your final output MUST be a single JSON object matching the defined output schema, containing a 'newYear' and an array of 'raceResults'.
 
 The Creator's guidance for this era: {{#if chronicleEntry}}"{{chronicleEntry}}"{{else}}None{{/if}}.
@@ -350,13 +380,9 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
         throw new Error("AI output was null or undefined.");
     }
     
-    // Fallback logic if AI fails to return the new year
     const newYear = output?.newYear || input.currentYear + input.years;
-
-    // Ensure we always have a valid array for results
     const raceResults = output.raceResults || [];
 
-    // Further validation for each race result
     const validatedResults = input.races.map(race => {
         const result = raceResults.find(r => r.raceId === race.id);
         if (result) {
@@ -367,9 +393,11 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
                 characterLogEntries: result.characterLogEntries || [],
                 fallenNotableCharacters: result.fallenNotableCharacters || [],
                 namedCommonerDeaths: result.namedCommonerDeaths || [],
+                updatedOccupiedTiles: result.updatedOccupiedTiles || race.occupiedTiles,
+                updatedKnownTiles: result.updatedKnownTiles || race.knownTiles,
+                newTechnologies: result.newTechnologies || [],
             };
         }
-        // If AI failed to return a result for a race, return a "no change" state
         return {
             raceId: race.id,
             summary: "Time passed uneventfully for this race.",
@@ -379,6 +407,9 @@ const advanceTimeAndGenerateNarrativeEventsFlow = ai.defineFlow(
             characterLogEntries: [],
             fallenNotableCharacters: [],
             namedCommonerDeaths: [],
+            updatedOccupiedTiles: race.occupiedTiles,
+            updatedKnownTiles: race.knownTiles,
+            newTechnologies: [],
         };
     });
     

@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { World, Race, HistoryEntry, NotableCharacter, DetailObject, CultureLogEntry, PoliticalLogEntry } from '@/types/world';
@@ -44,7 +45,8 @@ export function getWorlds(): World[] {
         const religion: DetailObject = (typeof race.religion === 'string')
             ? { name: race.religion, description: 'No description available.'}
             : race.religion || { name: "Animism", description: "The belief that spirits or essences inhabit all objects, creatures, and natural phenomena. The world is seen as a place full of spiritual power." };
-
+        
+        const startingTileId = race.occupiedTiles?.[0] || `tile-10-10`;
 
         return {
           ...race,
@@ -56,6 +58,9 @@ export function getWorlds(): World[] {
           culture,
           cultureLog: race.cultureLog || [],
           politicalLog: race.politicalLog || [],
+          occupiedTiles: race.occupiedTiles || [startingTileId],
+          knownTiles: race.knownTiles || [startingTileId],
+          technologies: race.technologies || [],
         };
       }),
       notableCharacters: [], // Moved to race level
@@ -92,27 +97,41 @@ export function deleteWorld(worldId: string): void {
 export function createPreliminaryWorld(name: string, raceCount: number): World {
     const worldId = "world_" + Date.now();
 
+    const startingPositions = [
+        { x: 10, y: 10 },
+        { x: 15, y: 15 },
+        { x: 5, y: 5 },
+        { x: 15, y: 5 },
+    ];
+
     const newWorld: World = {
       id: worldId,
       name: name,
       era: "Primal Era",
       currentYear: 1,
-      races: Array.from({ length: raceCount }, () => ({
-        id: crypto.randomUUID(),
-        name: '',
-        population: 1000,
-        racePoints: 100,
-        activeBoons: [],
-        problems: [],
-        notableCharacters: [],
-        history: [],
-        status: "Emerging",
-        religion: { name: "Animism", description: "The belief that spirits or essences inhabit all objects, creatures, and natural phenomena. The world is seen as a place full of spiritual power." },
-        government: { name: "Tribal", description: "A simple social structure where leadership is informal, often held by the most respected or strongest individual. Decisions are made communally or by the leader for the good of the group." },
-        culture: { name: "Nascent", description: "A culture centered on basic survival. All value is placed on finding food, seeking shelter, and protecting the young. There are no formal traditions, art forms, or spiritual beliefs beyond simple superstitions." },
-        cultureLog: [],
-        politicalLog: [],
-      })),
+      races: Array.from({ length: raceCount }, (_, i) => {
+        const startPos = startingPositions[i % startingPositions.length];
+        const startTileId = `tile-${startPos.x}-${startPos.y}`;
+        return {
+            id: crypto.randomUUID(),
+            name: '',
+            population: 1000,
+            racePoints: 100,
+            activeBoons: [],
+            problems: [],
+            notableCharacters: [],
+            history: [],
+            status: "Emerging",
+            religion: { name: "Animism", description: "The belief that spirits or essences inhabit all objects, creatures, and natural phenomena. The world is seen as a place full of spiritual power." },
+            government: { name: "Tribal", description: "A simple social structure where leadership is informal, often held by the most respected or strongest individual. Decisions are made communally or by the leader for the good of the group." },
+            culture: { name: "Nascent", description: "A culture centered on basic survival. All value is placed on finding food, seeking shelter, and protecting the young. There are no formal traditions, art forms, or spiritual beliefs beyond simple superstitions." },
+            cultureLog: [],
+            politicalLog: [],
+            occupiedTiles: [startTileId],
+            knownTiles: [startTileId],
+            technologies: [],
+        }
+      }),
       population: 0,
       significantEvents: [`The world of ${name} was forged.`],
       cataclysmPreparations: 'None',

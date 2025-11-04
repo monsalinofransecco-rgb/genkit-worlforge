@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -16,10 +17,13 @@ import {
   Sparkles,
   MapPin,
   ShieldQuestion,
+  Ship,
+  MountainIcon,
 } from 'lucide-react';
 import { ProblemsTab } from './ProblemsTab';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 
 function StatCard({
   title,
@@ -133,8 +137,29 @@ export function OverviewTab({ race }: TabProps) {
             <StatCard title="Race Points" value={race.racePoints} icon={<Gem className="text-muted-foreground" />} />
             <StatCard title="Religion" value={race.religion.name} icon={<ShieldQuestion className="text-muted-foreground" />} popoverContent={religionPopover} />
             <StatCard title="Government" value={race.government.name} icon={<Landmark className="text-muted-foreground" />} popoverContent={governmentPopover} />
-            <StatCard title="Location" value={race.location || "Not Set"} icon={<MapPin className="text-muted-foreground" />} />
+            <StatCard title="Territory" value={`${race.occupiedTiles.length} Tiles`} icon={<MapPin className="text-muted-foreground" />} />
         </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Technologies</CardTitle>
+                <CardDescription>Major advancements unlocked by this race.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {race.technologies && race.technologies.length > 0 ? (
+                    <div className='flex flex-wrap gap-2'>
+                        {race.technologies.map(tech => (
+                             <Badge key={tech} variant="secondary" className="text-base">
+                                {tech === 'Sailing' && <Ship className="mr-2 h-4 w-4" />}
+                                {tech === 'Mountaineering' && <MountainIcon className="mr-2 h-4 w-4" />}
+                                {tech}
+                            </Badge>
+                        ))}
+                    </div>
+                ): (
+                    <p className='text-sm text-muted-foreground'>No technologies discovered yet.</p>
+                )}
+            </CardContent>
+        </Card>
         <ProblemsTab problems={race.problems || []} />
     </div>
   );

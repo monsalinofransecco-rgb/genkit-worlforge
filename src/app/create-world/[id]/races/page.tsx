@@ -110,47 +110,47 @@ export default function PopulateRacesPage({
   async function onSubmit(data: FormValues) {
     if (!world) return;
     setIsLoading(true);
-
+  
     try {
-      const finalRaces: Race[] = [];
       let totalPopulation = 0;
-
-      for (const raceData of data.races) {
+  
+      // Use map to process races asynchronously
+      const finalRaces = await Promise.all(data.races.map(async (raceData, index) => {
         const namingProfileResult = await runGenerateRaceNamingProfile({
           raceName: raceData.name,
         });
-
+  
         if (!namingProfileResult.success || !namingProfileResult.data) {
-          throw new Error(
-            `Failed to generate naming profile for ${raceData.name}`
-          );
+          throw new Error(`Failed to generate naming profile for ${raceData.name}`);
         }
-        
+  
         const population = raceData.population;
         totalPopulation += population;
-
-        finalRaces.push({
-          id: crypto.randomUUID(),
+  
+        // Get the existing race from the world template
+        const templateRace = world.races[index];
+  
+        return {
+          ...templateRace, // Keep id, occupiedTiles, etc. from the template
           name: raceData.name,
           traits: `${raceData.description} Common traits: ${raceData.racialTraits}. Special traits: ${raceData.specialTraits || 'None'}.`,
-          location: raceData.location,
           population: population,
           racePoints: 100,
           activeBoons: [],
           namingProfile: namingProfileResult.data,
-        });
-      }
-
+        };
+      }));
+  
       const finalWorld: World = {
         ...world,
         races: finalRaces,
         population: totalPopulation,
         narrativeLog: [
-            ...world.narrativeLog,
-            { year: 1, type: 'narrative', content: `The races of ${world.name} have been forged.`}
+          ...world.narrativeLog,
+          { year: 1, type: 'narrative', content: `The races of ${world.name} have been forged.` }
         ]
       };
-
+  
       saveWorld(finalWorld);
       toast({
         title: 'World Forged!',
@@ -162,9 +162,9 @@ export default function PopulateRacesPage({
       toast({
         variant: 'destructive',
         title: 'Failed to Forge World',
-        description:
-          error instanceof Error ? error.message : 'An unknown error occurred.',
+        description: error instanceof Error ? error.message : 'An unknown error occurred.',
       });
+    } finally {
       setIsLoading(false);
     }
   }
@@ -296,10 +296,10 @@ export default function PopulateRacesPage({
                             name={`races.${index}.location`}
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Starting Location</FormLabel>
+                                <FormLabel>Starting Location Description</FormLabel>
                                 <FormControl>
                                     <Input
-                                    placeholder="e.g., The Crystal Mountains"
+                                    placeholder="e.g., A lush, hidden valley in the Crystal Mountains"
                                     {...field}
                                     />
                                 </FormControl>
