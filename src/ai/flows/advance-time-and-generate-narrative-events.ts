@@ -154,6 +154,7 @@ const RaceSimulationResultSchema = z.object({
     updatedOccupiedTiles: z.array(z.string()).describe("The new list of all tiles this race occupies."),
     updatedKnownTiles: z.array(z.string()).describe("The complete list of all tiles this race is aware of (Fog of War)."),
     newTechnologies: z.array(z.string()).optional().describe("Any new technologies discovered, e.g., 'Sailing'."),
+    newSettlement: z.string().optional().describe("If the race establishes a new primary settlement or moves, provide the new settlement's name here (e.g., 'Stonehaven', 'The Sunken City')."),
 });
 
 const AdvanceTimeAndGenerateNarrativeEventsOutputSchema = z.object({
@@ -202,7 +203,7 @@ Your worldview, logic, and narrative **MUST** be **PRIMEVAL, SIMPLE, and SUPERST
     * "Stockpile more nuts."
     * "Create a simple ritual to please the (perceived) angry spirit."
 
-All of your outputs ('summary', 'newProblems', 'characterLogEntries') **MUST** reflect this simple, primal worldview.
+All of your outputs (summary, newProblems, characterLogEntries) **MUST** reflect this simple, primal worldview.
 ---
 
 You are simulating the world of {{{worldName}}}. It is year {{currentYear}}.
@@ -238,74 +239,76 @@ The world is a grid. Here are all the tiles you need to know about:
 FOR EACH RACE, FOLLOW THESE DIRECTIVES:
 
 1.  **PERSONA & TONE:**
-    * **Primal Filter:** The entire \\\`summary\\\` and \\\`characterLogEntries\\\` for each race MUST reflect a primal, superstitious worldview. Think survival, immediate threats, and simple cause-and-effect.
+    * **Primal Filter:** The entire \`summary\` and \`characterLogEntries\` for each race MUST reflect a primal, superstitious worldview. Think survival, immediate threats, and simple cause-and-effect.
     * **Guidance Check:**
         {{#if chronicleEntry}}
-        * **Creator Is Active:** The Creator has provided guidance: "{{chronicleEntry}}". The \\\`summary\\\` MUST narrate the outcome of this guidance for the race. You are AUTHORIZED to use 'Creator's guidance' language.
+        * **Creator Is Active:** The Creator has provided guidance: "{{chronicleEntry}}". The \`summary\` MUST narrate the outcome of this guidance for the race. You are AUTHORIZED to use 'Creator's guidance' language.
         {{else}}
-        * **Autonomous Mode:** The Creator was silent. The \\\`summary\\\` MUST be driven *only* by the race's 'problems' and 'traits'. You are STRICTLY FORBIDDEN from using words like 'Creator,' 'divine,' or 'vision' UNLESS a Boon (like 'wisdom') is active. If you must narrate a vision, it is a 'strange, prophetic dream' from the race's own mind.
+        * **Autonomous Mode:** The Creator was silent. The \`summary\` MUST be driven *only* by the race's 'problems' and 'traits'. You are STRICTLY FORBIDDEN from using words like 'Creator,' 'divine,' or 'vision' UNLESS a Boon (like 'wisdom') is active. If you must narrate a vision, it is a 'strange, prophetic dream' from the race's own mind.
         {{/if}}
 
 2.  **BOON INTEGRATION (MANDATORY):**
     You must check for active boons on the *current race you are simulating* and apply their effects.
     {{#each races}}
         {{#if boons.pop_boom_1}}
-        - **Boon Active: Boon of Fertility.** You MUST apply a positive bias to the \\\`populationChange.born\\\` statistic and narrate this in the \\\`summary\\\`.
+        - **Boon Active: Boon of Fertility.** You MUST apply a positive bias to the \`populationChange.born\` statistic and narrate this in the \`summary\`.
         {{/if}}
         {{#if boons.great_leader}}
-        - **Boon Active: Boon of Heroism.** You MUST generate one \\\`newCharacter\\\`.
+        - **Boon Active: Boon of Heroism.** You MUST generate one \`newCharacter\`.
         {{/if}}
         {{#if boons.inno_burst_1}}
         - **Boon Active: Boon of Discovery.** You MUST generate a notableEvent for a primal discovery.
         {{/if}}
         {{#if boons.gov_reform}}
-        - **Boon Active: Governmental Reform.** You MUST generate a \\\`newGovernment\\\` object and a \\\`newPoliticLogEntry\\\`.
+        - **Boon Active: Governmental Reform.** You MUST generate a \`newGovernment\` object and a \`newPoliticLogEntry\`.
         {{/if}}
     {{/each}}
 
 3.  **PROBLEM & EVENT SIMULATION:**
-    * Evaluate \\\`chronicleEntry\\\` and \\\`activeBoons\\\`. If they solve a problem, resolve it in the 'summary' and REMOVE it from \\\`updatedProblems\\\`.
-    * If a problem was IGNORED, ESCALATE its severity in \\\`updatedProblems\\\`.
-    * If a 'Critical' problem was ignored, generate a CATASTROPHIC outcome with a massive \\\`populationChange.died\\\` number.
+    * Evaluate \`chronicleEntry\` and \`activeBoons\`. If they solve a problem, resolve it in the 'summary' and REMOVE it from \`updatedProblems\`.
+    * If a problem was IGNORED, ESCALATE its severity in \`updatedProblems\`.
+    * If a 'Critical' problem was ignored, generate a CATASTROPHIC outcome with a massive \`populationChange.died\` number.
     * Generate new problems (max 3 total per race) based on events.
     * Apply Boon effects (beyond the mandatory list): 'strength' (better conflict outcomes), 'wisdom' (advancement), 'resilience' (better recovery).
 
 4.  **DEATH SIMULATION (THE "SOUL"):**
-    * **Notable Deaths:** Review the \\\`livingCharacters\\\`. Determine if any should die from old age, sickness, or events. If so, you MUST generate a \\\`fallenNotableCharacters\\\` entry for them. You MUST write their detailed, emotional \\\`deathDetails\\\` (reason, favoriteThing, happiestMemory, lastThought).
-    * **Commoner Deaths:** Look at your \\\`populationChange.died\\\` statistic. To make this number feel real, you MUST "promote" **2-3** of these anonymous deaths into named entries for the \\\`namedCommonerDeaths\\\` array. **Do not exceed 3.**
-        * For each, invent a new, culturally-appropriate \\\`name\\\` **using the NAMING PROFILE**.
-        * Give them a simple \\\`title\\\` (e.g., 'a young hunter,' 'an old farmer,' 'a brave mother').
-        * The \\\`deathDetails.reason\\\` for these commoners MUST be tied to the era's \\\`summary\\\` or \\\`events\\\`.
-        * You MUST write their full, emotionally-tugging \\\`deathDetails\\\`.
+    * **Notable Deaths:** Review the \`livingCharacters\`. Determine if any should die from old age, sickness, or events. If so, you MUST generate a \`fallenNotableCharacters\` entry for them. You MUST write their detailed, emotional \`deathDetails\` (reason, favoriteThing, happiestMemory, lastThought).
+    * **Commoner Deaths:** Look at your \`populationChange.died\` statistic. To make this number feel real, you MUST "promote" **2-3** of these anonymous deaths into named entries for the \`namedCommonerDeaths\` array. **Do not exceed 3.**
+        * For each, invent a new, culturally-appropriate \`name\` **using the NAMING PROFILE**.
+        * Give them a simple \`title\` (e.g., 'a young hunter,' 'an old farmer,' 'a brave mother').
+        * The \`deathDetails.reason\` for these commoners MUST be tied to the era's \`summary\` or \`events\`.
+        * You MUST write their full, emotionally-tugging \`deathDetails\`.
 
 5.  **CULTURE, GOVERNMENT, & RELIGION SIMULATION (SLOW SYSTEMS):**
     * These systems change RARELY. Do NOT change them every year.
     * Ask: "Did a MAJOR event happen that would fundamentally change how this society works or what it believes?" (e.g., discovery of a new resource, a great war, a new leader, a cataclysm).
     * **If YES:** A major event occurred.
-        * **Culture:** If appropriate, generate a \\\`newCulture\\\` object (e.g., name: "Militaristic"). You MUST also generate a corresponding \\\`newCultureLogEntry\\\` to explain the change.
-        * **Government/Religion:** If appropriate, generate \\\`newGovernment\\\` and/or \\\`newReligion\\\` objects. If either changes, you MUST generate a \\\`newPoliticLogEntry\\\` explaining the shift (e.g., eventName: "The Elder's Accord", summary: "After the war, the tribe formed a council of elders...").
+        * **Culture:** If appropriate, generate a \`newCulture\` object (e.g., name: "Militaristic"). You MUST also generate a corresponding \`newCultureLogEntry\` to explain the change.
+        * **Government/Religion:** If appropriate, generate \`newGovernment\` and/or \`newReligion\` objects. If either changes, you MUST generate a \`newPoliticLogEntry\` explaining the shift (e.g., eventName: "The Elder's Accord", summary: "After the war, the tribe formed a council of elders...").
     * **If NO:** Do not generate any new culture, government, or religion objects or log entries. They remain the same.
 
 6.  **POPULATION & CHARACTER SIMULATION:**
     * Calculate 'born' and 'died' based on events. Base death rate is ~2% of population per year, base birth rate is ~4%. Adjust based on narrative.
-    * Calculate \\\`newPopulation\\\`.
+    * Calculate \`newPopulation\`.
     * **Character Log Entries (MANDATORY):** For **every single living notable character** provided in the input, you MUST generate a new, unique, first-person ('I...') personal log entry reflecting on the events of THIS era. DO NOT repeat their previous log entries.
     * **Character Emergence:**
         * **Max 4 Rule:** If a race has 4 living characters, FORBIDDEN from generating a new one.
         * **Last Spark Rule:** If a race has 0 living characters, you MUST generate 1 new character.
         * Base emergence on narrative triggers (hardship, talent, boons).
-        * If a character emerges, populate \\\`newCharacter\\\`. The character's \\\`name\\\` **MUST** be generated using the NAMING PROFILE. The name must be simple (one or two phonemes) and not a repeat. The \\\`firstLogEntry\\\` MUST be an emotional thought tied to their \\\`emergenceReason\\\`.
+        * If a character emerges, populate \`newCharacter\`. The character's \`name\` **MUST** be generated using the NAMING PROFILE. The name must be simple (one or two phonemes) and not a repeat. The \`firstLogEntry\` MUST be an emotional thought tied to their \`emergenceReason\`.
 7.  **FINAL SUMMARY:**
-    * When you write the main \\\`summary\\\`, you MUST include the total \\\`died\\\` statistic (e.g., "...claimed 31 lives...").
-    * You MUST also mention by name **one or two** of the most significant deaths you just generated (from \\\`fallenNotableCharacters\\\` or \\\`namedCommonerDeaths\\\`).
+    * When you write the main \`summary\`, you MUST include the total \`died\` statistic (e.g., "...claimed 31 lives...").
+    * You MUST also mention by name **one or two** of the most significant deaths you just generated (from \`fallenNotableCharacters\` or \`namedCommonerDeaths\`).
     * 
 8.  **TARGETED DIRECTIVES (MANDATORY):**
-    You must check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If directives exist for the race you are simulating, you MUST execute them by interpreting the 'boonId' and 'content' for the specified 'targets'. For example:
-    - If a directive has a 'boonId' of 'appear_in_dreams', you MUST make the targeted character have a dream with the message from 'content', and generate a 'personalLogEntry' for them reflecting on it.
-    - If a directive has a 'boonId' of 'whisper_of_attraction', you MUST create a 'notableEvent' that forces the two targeted characters to interact to foster the bond described in 'content'. Their 'personalLogEntries' must reflect this.
+You must check the 'ACTIVE CREATOR DIRECTIVES' list from the input. If directives exist for the race you are simulating, you MUST execute them by interpreting the 'boonId' and 'content' for the specified 'targets'. For example:
+{{#each boonDirectives}}
+  - **Directive for {{boonId}}:** Targets {{#each targets}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}. Content: "{{content}}". You MUST implement this.
+{{/each}}
+
 
 9.  **ACHIEVEMENT GENERATION (MANDATORY):**
-    You must review this race's \\\`events\\\` list that you just generated. If a major, "first-time" milestone occurred, you **MUST** generate a \\\`newAchievement\\\` object for it.
+    You must review this race's \`events\` list that you just generated. If a major, "first-time" milestone occurred, you **MUST** generate a \`newAchievement\` object for it.
     * "The Gift of Fire" (Discovery of fire): 50 RP
     * "First Tamed Beast" (First domesticated animal): 75 RP
     * "The Elder's Accord" (First formal government): 100 RP
@@ -314,20 +317,20 @@ FOR EACH RACE, FOLLOW THESE DIRECTIVES:
     * "The First Song" (First evidence of art/culture): 25 RP
 
 10. **EXPLORATION, EXPANSION, & TECHNOLOGY (MANDATORY):**
-    * Review the race's \\\`occupiedTiles\\\` and \\\`knownTiles\\\`.
+    * Review the race's \`occupiedTiles\` and \`knownTiles\`.
     * If the race has a "Curious" or "Expansionist" trait, or a 'great_leader' boon, they will try to explore or expand.
-    * **Expansion:** They can only expand to **adjacent, habitable tiles** (e.g., 'Plains', 'Forest'). Add the new tile to \\\`updatedOccupiedTiles\\\`.
-    * **Exploration:** When they expand, they "discover" all adjacent tiles. Add these new tile IDs to \\\`updatedKnownTiles\\\`.
+    * **Expansion:** They can only expand to **adjacent, habitable tiles** (e.g., 'Plains', 'Forest'). Add the new tile to \`updatedOccupiedTiles\`. If they establish a major new home, you **MUST** provide a \`newSettlement\` name.
+    * **Exploration:** When they expand, they "discover" all adjacent tiles. Add these new tile IDs to \`updatedKnownTiles\`.
     * **TECHNOLOGY (Your "Development" rule):**
-        * A race **CANNOT** cross an 'Ocean' tile unless their \\\`technologies\\\` list includes 'Sailing'.
+        * A race **CANNOT** cross an 'Ocean' tile unless their \`technologies\` list includes 'Sailing'.
         * A race **CANNOT** easily expand into 'Mountains' unless they have 'Mountaineering'.
-        * If a race is next to an 'Ocean' for a long time, you **MUST** generate a \\\`notableEvent\\\` for them discovering 'Basic Sailing' and add it to \\\`newTechnologies\\\`.
+        * If a race is next to an 'Ocean' for a long time, you **MUST** generate a \`notableEvent\` for them discovering 'Basic Sailing' and add it to \`newTechnologies\`.
 
 11. **FIRST CONTACT PROTOCOL (CRITICAL):**
-    * While exploring, if a race moves into a tile that is already on another race's \\\`occupiedTiles\\\` list (check the input), this is a **"First Contact"** event.
-    * You **MUST** generate a major \\\`notableEvent\\\` for *both* races involved.
+    * While exploring, if a race moves into a tile that is already on another race's \`occupiedTiles\` list (check the input), this is a **"First Contact"** event.
+    * You **MUST** generate a major \`notableEvent\` for *both* races involved.
     * The outcome of the First Contact **MUST** be logical. Base it on the traits of *both* races (e.g., "Hardy, Industrious" meeting "Mystical, Xenophobic" will be tense).
-    * The races now share \\\`knownTiles\\\` for all adjacent territories.
+    * The races now share \`knownTiles\` for all adjacent territories.
 
 
 Your final output MUST be a single JSON object matching the defined output schema, containing a 'newYear' and an array of 'raceResults'.

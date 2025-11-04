@@ -142,7 +142,7 @@ export function OverviewTab({ race, world }: TabProps) {
             <StatCard title="Race Points" value={race.racePoints} icon={<Gem className="text-muted-foreground" />} />
             <StatCard title="Religion" value={race.religion.name} icon={<ShieldQuestion className="text-muted-foreground" />} popoverContent={religionPopover} />
             <StatCard title="Government" value={race.government.name} icon={<Landmark className="text-muted-foreground" />} popoverContent={governmentPopover} />
-            <StatCard title="Territory" value={`${race.occupiedTiles.length} Tiles`} icon={<MapPin className="text-muted-foreground" />} />
+            <StatCard title="Territory" value={race.settlement} icon={<MapPin className="text-muted-foreground" />} />
         </div>
         
         {(race.activeBoons.length > 0 || pendingDirectives.length > 0) && (

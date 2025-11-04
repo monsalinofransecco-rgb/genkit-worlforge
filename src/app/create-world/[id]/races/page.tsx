@@ -129,8 +129,9 @@ export default function PopulateRacesPage({
         return {
           ...templateRace, // Keep id, occupiedTiles, etc. from the template
           name: raceData.name,
-          traits: `${raceData.description} They begin in ${raceData.location}. Common traits: ${raceData.racialTraits}. Special traits: ${raceData.specialTraits || 'None'}.`,
+          traits: `${raceData.description} Common traits: ${raceData.racialTraits}. Special traits: ${raceData.specialTraits || 'None'}.`,
           population: population,
+          settlement: raceData.location,
           racePoints: 100,
           activeBoons: [],
           namingProfile: namingProfileResult.data,
